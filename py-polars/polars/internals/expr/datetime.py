@@ -138,6 +138,42 @@ class ExprDateTimeNameSpace:
         See `chrono strftime/strptime
         <https://docs.rs/chrono/latest/chrono/format/strftime/index.html>`_.
 
+        Examples
+        --------
+        >>> from datetime import timedelta, datetime
+        >>> start = datetime(2001, 1, 1)
+        >>> stop = datetime(2001, 1, 4)
+        >>> df = pl.DataFrame({"date": pl.date_range(start, stop, timedelta(days=1))})
+        >>> df
+        shape: (4, 1)
+        ┌─────────────────────┐
+        │ date                │
+        │ ---                 │
+        │ datetime[μs]        │
+        ╞═════════════════════╡
+        │ 2001-01-01 00:00:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-02 00:00:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-03 00:00:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-04 00:00:00 │
+        └─────────────────────┘
+        >>> df.select(pl.col("date").dt.strftime(fmt="%Y-%m-%d"))
+        shape: (4, 1)
+        ┌────────────┐
+        │ date       │
+        │ ---        │
+        │ str        │
+        ╞════════════╡
+        │ 2001-01-01 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-02 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-03 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-04 │
+        └────────────┘
         """
         return pli.wrap_expr(self._pyexpr.strftime(fmt))
 
@@ -664,6 +700,26 @@ class ExprDateTimeNameSpace:
         -------
         Nanosecond as UInt32
 
+        Examples
+        --------
+        >>> df = pl.DataFrame({'date':['2022-01-01 00:00:00.001']}).with_column(pl.col('date').str.strptime(pl.Datetime,fmt='%F %H:%M:%S%.3f'))
+        shape: (1, 1)
+        ┌─────────────────────────┐
+        │ date                    │
+        │ ---                     │
+        │ datetime[μs]            │
+        ╞═════════════════════════╡
+        │ 2022-01-01 00:00:00.001 │
+        └─────────────────────────┘
+        >>> df.with_column(pl.col('date').dt.nanosecond())
+        shape: (1, 1)
+        ┌─────────┐
+        │ date    │
+        │ ---     │
+        │ u32     │
+        ╞═════════╡
+        │ 1000000 │
+        └─────────┘
         """
         return pli.wrap_expr(self._pyexpr.nanosecond())
 

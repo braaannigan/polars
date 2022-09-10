@@ -393,7 +393,7 @@ class Expr:
         └──────────┘
 
         """
-        return self**0.5
+        return self ** 0.5
 
     def log10(self) -> Expr:
         """
@@ -1782,6 +1782,22 @@ class Expr:
         reverse
             Return the smallest elements.
 
+        Examples
+        --------
+        >>> df = pl.DataFrame({'a':[3, 1, 2, 5, 8]})
+        >>> df.select(pl.col('a').top_k(3))
+        shape: (3, 1)
+        ┌─────┐
+        │ a   │
+        │ --- │
+        │ i64 │
+        ╞═════╡
+        │ 8   │
+        ├╌╌╌╌╌┤
+        │ 5   │
+        ├╌╌╌╌╌┤
+        │ 3   │
+        └─────┘
         """
         return wrap_expr(self._pyexpr.top_k(k, reverse))
 
@@ -1883,7 +1899,19 @@ class Expr:
         ----------
         element
             Expression or scalar value.
-
+        Examples
+        --------
+        >>> df = pl.DataFrame({"a": [1,2,3,4,5]})
+        >>> # If we were to add a 3 what position should it be inserted to maintain order?
+        >>> df.select(pl.col("a").search_sorted(3))
+        shape: (1, 1)
+        ┌─────┐
+        │ a   │
+        │ --- │
+        │ u32 │
+        ╞═════╡
+        │ 2   │
+        └─────┘
         """
         element = expr_to_lit_or_expr(element, str_to_lit=False)
         return wrap_expr(self._pyexpr.search_sorted(element._pyexpr))
@@ -3298,6 +3326,22 @@ class Expr:
         n
             Number of rows to return.
 
+        Examples
+        --------
+        >>> df = pl.DataFrame({"foo": [1, 2, 3, 4, 5, 6, 7]})
+        >>> df.limit(3)
+        shape: (3, 1)
+        ┌─────┐
+        │ foo │
+        │ --- │
+        │ i64 │
+        ╞═════╡
+        │ 1   │
+        ├╌╌╌╌╌┤
+        │ 2   │
+        ├╌╌╌╌╌┤
+        │ 3   │
+        └─────┘
         """
         return self.head(n)
 
@@ -4579,6 +4623,34 @@ class Expr:
         bias
             If False, then the calculations are corrected for statistical bias.
 
+        Examples
+        --------
+        >>> df = pl.DataFrame(
+        ...     {
+        ...         "A": [1.0, 2.0, 9.0, 2.0, 13.0],
+        ...     }
+        ... )
+        >>> df.select(
+        ...     [
+        ...         pl.col("A").rolling_skew(window_size=3),
+        ...     ]
+        ... )
+        shape: (5, 1)
+        ┌───────────┐
+        │ A         │
+        │ ---       │
+        │ f64       │
+        ╞═══════════╡
+        │ null      │
+        ├╌╌╌╌╌╌╌╌╌╌╌┤
+        │ null      │
+        ├╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 0.665469  │
+        ├╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 0.707107  │
+        ├╌╌╌╌╌╌╌╌╌╌╌┤
+        │ -0.319312 │
+        └───────────┘
         """
         return wrap_expr(self._pyexpr.rolling_skew(window_size, bias))
 
@@ -4949,6 +5021,26 @@ class Expr:
         min_val
             Minimum value.
 
+        Examples
+        --------
+        >>> df = pl.DataFrame({"a": [1, 2, 3, 4, 5]})
+        >>> df.select(pl.col("a").clip_min(3))
+        shape: (5, 1)
+        ┌─────┐
+        │ a   │
+        │ --- │
+        │ i64 │
+        ╞═════╡
+        │ 3   │
+        ├╌╌╌╌╌┤
+        │ 3   │
+        ├╌╌╌╌╌┤
+        │ 3   │
+        ├╌╌╌╌╌┤
+        │ 4   │
+        ├╌╌╌╌╌┤
+        │ 5   │
+        └─────┘
         """
         return wrap_expr(self._pyexpr.clip_min(min_val))
 
@@ -4966,6 +5058,26 @@ class Expr:
         max_val
             Maximum value.
 
+        Examples
+        --------
+        >>> df = pl.DataFrame({"a": [1, 2, 3, 4, 5]})
+        >>> df.select(pl.col("a").clip_max(3))
+        shape: (5, 1)
+        ┌─────┐
+        │ a   │
+        │ --- │
+        │ i64 │
+        ╞═════╡
+        │ 1   │
+        ├╌╌╌╌╌┤
+        │ 2   │
+        ├╌╌╌╌╌┤
+        │ 3   │
+        ├╌╌╌╌╌┤
+        │ 3   │
+        ├╌╌╌╌╌┤
+        │ 3   │
+        └─────┘
         """
         return wrap_expr(self._pyexpr.clip_max(max_val))
 
