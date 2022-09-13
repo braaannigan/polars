@@ -230,6 +230,33 @@ class DateTimeNameSpace:
         -------
         Week number as UInt32
 
+        Examples
+        --------
+        >>> from datetime import timedelta, datetime
+        >>> start = datetime(2001, 1, 1)
+        >>> stop = datetime(2001, 4, 1)
+        >>> df = pl.DataFrame({"date": pl.date_range(start, stop, timedelta(days=31))})
+        >>> df
+        shape: (3, 1)
+        ┌─────────────────────┐
+        │ date                │
+        │ ---                 │
+        │ datetime[μs]        │
+        ╞═════════════════════╡
+        │ 2001-01-01 00:00:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-02-01 00:00:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-03-04 00:00:00 │
+        └─────────────────────┘
+        >>> df["date"].dt.week()
+        shape: (3,)
+        Series: 'date' [u32]
+        [
+                1
+                5
+                9
+        ]
         """
 
     def weekday(self) -> pli.Series:
@@ -244,6 +271,33 @@ class DateTimeNameSpace:
         -------
         Week day as UInt32
 
+        Examples
+        --------
+        >>> from datetime import timedelta, datetime
+        >>> start = datetime(2001, 1, 1)
+        >>> stop = datetime(2001, 1, 9)
+        >>> df = pl.DataFrame({"date": pl.date_range(start, stop, timedelta(days=3))})
+        >>> df
+        shape: (3, 1)
+        ┌─────────────────────┐
+        │ date                │
+        │ ---                 │
+        │ datetime[μs]        │
+        ╞═════════════════════╡
+        │ 2001-01-01 00:00:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-04 00:00:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-07 00:00:00 │
+        └─────────────────────┘
+        >>> df["date"].dt.weekday()
+        shape: (3,)
+        Series: 'date' [u32]
+        [
+                0
+                3
+                6
+        ]
         """
 
     def day(self) -> pli.Series:
@@ -259,6 +313,33 @@ class DateTimeNameSpace:
         -------
         Day as UInt32
 
+        Examples
+        --------
+        >>> from datetime import timedelta, datetime
+        >>> start = datetime(2001, 1, 1)
+        >>> stop = datetime(2001, 1, 9)
+        >>> df = pl.DataFrame({"date": pl.date_range(start, stop, timedelta(days=3))})
+        >>> df
+        shape: (3, 1)
+        ┌─────────────────────┐
+        │ date                │
+        │ ---                 │
+        │ datetime[μs]        │
+        ╞═════════════════════╡
+        │ 2001-01-01 00:00:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-04 00:00:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-07 00:00:00 │
+        └─────────────────────┘
+        >>> df["date"].dt.day()
+        shape: (3,)
+        Series: 'date' [u32]
+        [
+                1
+                4
+                7
+        ]
         """
 
     def ordinal_day(self) -> pli.Series:
@@ -274,6 +355,33 @@ class DateTimeNameSpace:
         -------
         Day as UInt32
 
+        Examples
+        --------
+        >>> from datetime import timedelta, datetime
+        >>> start = datetime(2001, 1, 1)
+        >>> stop = datetime(2001, 1, 9)
+        >>> df = pl.DataFrame({"date": pl.date_range(start, stop, timedelta(days=3))})
+        >>> df
+        shape: (3, 1)
+        ┌─────────────────────┐
+        │ date                │
+        │ ---                 │
+        │ datetime[μs]        │
+        ╞═════════════════════╡
+        │ 2001-01-01 00:00:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-04 00:00:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-07 00:00:00 │
+        └─────────────────────┘
+        >>> df["date"].dt.ordinal_day()
+        shape: (3,)
+        Series: 'date' [u32]
+        [
+                1
+                4
+                7
+        ]
         """
 
     def hour(self) -> pli.Series:
@@ -288,6 +396,33 @@ class DateTimeNameSpace:
         -------
         Hour as UInt32
 
+        Examples
+        --------
+        >>> from datetime import timedelta, datetime
+        >>> start = datetime(2001, 1, 1)
+        >>> stop = datetime(2001, 1, 2)
+        >>> df = pl.DataFrame({"date": pl.date_range(start, stop, timedelta(hours=12))})
+        >>> df
+        shape: (3, 1)
+        ┌─────────────────────┐
+        │ date                │
+        │ ---                 │
+        │ datetime[μs]        │
+        ╞═════════════════════╡
+        │ 2001-01-01 00:00:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-01 12:00:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-02 00:00:00 │
+        └─────────────────────┘
+        >>> df["date"].dt.hour()
+        shape: (3,)
+        Series: 'date' [u32]
+        [
+                0
+                12
+                0
+        ]
         """
 
     def minute(self) -> pli.Series:
@@ -302,6 +437,35 @@ class DateTimeNameSpace:
         -------
         Minute as UInt32
 
+        Examples
+        --------
+        >>> from datetime import timedelta, datetime
+        >>> start = datetime(2001, 1, 1)
+        >>> stop = datetime(2001, 1, 1, 0, 4, 0)
+        >>> df = pl.DataFrame(
+        ...     {"date": pl.date_range(start, stop, timedelta(minutes=2))}
+        ... )
+        >>> df
+        shape: (3, 1)
+        ┌─────────────────────┐
+        │ date                │
+        │ ---                 │
+        │ datetime[μs]        │
+        ╞═════════════════════╡
+        │ 2001-01-01 00:00:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-01 00:02:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-01 00:04:00 │
+        └─────────────────────┘
+        >>> df["date"].dt.minute()
+        shape: (3,)
+        Series: 'date' [u32]
+        [
+                0
+                2
+                4
+        ]
         """
 
     def second(self) -> pli.Series:
@@ -316,6 +480,35 @@ class DateTimeNameSpace:
         -------
         Second as UInt32
 
+        Examples
+        --------
+        >>> from datetime import timedelta, datetime
+        >>> start = datetime(2001, 1, 1)
+        >>> stop = datetime(2001, 1, 1, 0, 0, 4)
+        >>> df = pl.DataFrame(
+        ...     {"date": pl.date_range(start, stop, timedelta(seconds=2))}
+        ... )
+        >>> df
+        shape: (3, 1)
+        ┌─────────────────────┐
+        │ date                │
+        │ ---                 │
+        │ datetime[μs]        │
+        ╞═════════════════════╡
+        │ 2001-01-01 00:00:00 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-01 00:00:02 │
+        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+        │ 2001-01-01 00:00:04 │
+        └─────────────────────┘
+        >>> df["date"].dt.second()
+        shape: (3,)
+        Series: 'date' [u32]
+        [
+                0
+                2
+                4
+        ]
         """
 
     def nanosecond(self) -> pli.Series:
@@ -331,6 +524,23 @@ class DateTimeNameSpace:
         -------
         Nanosecond as UInt32
 
+        Examples
+        --------
+        >>> df = pl.DataFrame({'date':['2022-01-01 00:00:00.001']}).with_column(pl.col('date').str.strptime(pl.Datetime,fmt='%F %H:%M:%S%.3f'))
+        shape: (1, 1)
+        ┌─────────────────────────┐
+        │ date                    │
+        │ ---                     │
+        │ datetime[μs]            │
+        ╞═════════════════════════╡
+        │ 2022-01-01 00:00:00.001 │
+        └─────────────────────────┘
+        >>> df['date'].dt.nanosecond()
+        shape: (1,)
+        Series: 'date' [u32]
+        [
+                1000000
+        ]
         """
 
     def timestamp(self, tu: TimeUnit = "us") -> pli.Series:
@@ -342,6 +552,35 @@ class DateTimeNameSpace:
         tu : {'us', 'ns', 'ms'}
             Time unit.
 
+        Examples
+        --------
+        >>> from datetime import timedelta, datetime
+        >>> start = datetime(2001, 1, 1)
+        >>> stop = datetime(2001, 1, 3)
+        >>> date = pl.date_range(start, stop, timedelta(days=1))
+        shape: (3,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-01-02 00:00:00
+                2001-01-03 00:00:00
+        ]
+        >>> date.dt.timestamp()
+        shape: (3,)
+        Series: '' [i64]
+        [
+                978307200000000
+                978393600000000
+                978480000000000
+        ]
+        >>> date.dt.timestamp(tu="ms")
+         shape: (3,)
+         Series: '' [i64]
+         [
+                978307200000
+                978393600000
+                978480000000
+         ]
         """
 
     def epoch(self, tu: EpochTimeUnit = "us") -> pli.Series:
@@ -353,6 +592,35 @@ class DateTimeNameSpace:
         tu : {'us', 'ns', 'ms', 's', 'd'}
             Time unit.
 
+        Examples
+        --------
+        >>> from datetime import timedelta, datetime
+        >>> start = datetime(2001, 1, 1)
+        >>> stop = datetime(2001, 1, 3)
+        >>> date = pl.date_range(start, stop, timedelta(days=1))
+        shape: (3,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-01-02 00:00:00
+                2001-01-03 00:00:00
+        ]
+        >>> date.dt.epoch()
+        shape: (3,)
+        Series: '' [i64]
+        [
+                978307200000000
+                978393600000000
+                978480000000000
+        ]
+        >>> date.dt.epoch(tu="s")
+        shape: (3,)
+        Series: '' [i64]
+        [
+                978307200
+                978393600
+                978480000
+        ]
         """
 
     def with_time_unit(self, tu: TimeUnit) -> pli.Series:
@@ -367,6 +635,25 @@ class DateTimeNameSpace:
         tu : {'ns', 'us', 'ms'}
             Time unit for the ``Datetime`` Series.
 
+        Examples
+        --------
+        >>> from datetime import datetime
+        >>> date = pl.date_range(datetime(2001, 1, 1), datetime(2001, 1, 3), "1d", time_unit="ns")
+        shape: (3,)
+        Series: '' [datetime[ns]]
+        [
+                2001-01-01 00:00:00
+                2001-01-02 00:00:00
+                2001-01-03 00:00:00
+        ]
+        >>> date.dt.with_time_unit(tu="us")
+        shape: (3,)
+        Series: '' [datetime[μs]]
+        [
+                +32971-04-28 00:00:00
+                +32974-01-22 00:00:00
+                +32976-10-18 00:00:00
+        ]
         """
 
     def cast_time_unit(self, tu: TimeUnit) -> pli.Series:

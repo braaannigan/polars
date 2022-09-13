@@ -711,7 +711,7 @@ class ExprDateTimeNameSpace:
         ╞═════════════════════════╡
         │ 2022-01-01 00:00:00.001 │
         └─────────────────────────┘
-        >>> df.with_column(pl.col('date').dt.nanosecond())
+        >>> df.select(pl.col('date').dt.nanosecond())
         shape: (1, 1)
         ┌─────────┐
         │ date    │
