@@ -665,6 +665,35 @@ class DateTimeNameSpace:
         tu : {'ns', 'us', 'ms'}
             Time unit for the ``Datetime`` Series.
 
+        Examples
+        --------
+        >>> from datetime import datetime
+        >>> date = pl.date_range(
+        ...             datetime(2001, 1, 1), datetime(2001, 1, 3), "1d"
+        ...         )
+        shape: (3,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-01-02 00:00:00
+                2001-01-03 00:00:00
+        ]
+        >>> date.dt.cast_time_unit(tu="ms")
+        shape: (3,)
+        Series: 'tu_ms' [datetime[ms]]
+        [
+                2001-01-01 00:00:00
+                2001-01-02 00:00:00
+                2001-01-03 00:00:00
+        ]
+        >>> date.dt.cast_time_unit(tu="ns")
+        shape: (3,)
+        Series: '' [datetime[ns]]
+        [
+                2001-01-01 00:00:00
+                2001-01-02 00:00:00
+                2001-01-03 00:00:00
+        ]
         """
 
     def with_time_zone(self, tz: str | None) -> pli.Series:
@@ -676,6 +705,27 @@ class DateTimeNameSpace:
         tz
             Time zone for the `Datetime` Series.
 
+        Examples
+        --------
+        >>> from datetime import datetime
+        >>> date = pl.date_range(
+        ...             datetime(2020, 3, 1), datetime(2020, 5, 1), "1mo"
+        ...         )
+        shape: (3,)
+        Series: '' [datetime[μs]]
+        [
+                2020-03-01 00:00:00
+                2020-04-01 00:00:00
+                2020-05-01 00:00:00
+        ]
+        >>> date.dt.with_time_zone(tz="Europe/London")
+        shape: (3,)
+        Series: '' [datetime[μs, Europe/London]]
+        [
+                2020-03-01 00:00:00 GMT
+                2020-04-01 00:00:00 BST
+                2020-05-01 00:00:00 BST
+        ]
         """
 
     def days(self) -> pli.Series:
@@ -686,6 +736,27 @@ class DateTimeNameSpace:
         -------
         A series of dtype Int64
 
+        Examples
+        --------
+        >>> from datetime import datetime
+        >>> date = pl.date_range(
+        ...             datetime(2020, 3, 1), datetime(2020, 5, 1), "1mo"
+        ...         )
+        shape: (3,)
+        Series: '' [datetime[μs]]
+        [
+                2020-03-01 00:00:00
+                2020-04-01 00:00:00
+                2020-05-01 00:00:00
+        ]
+        >>> date.diff().dt.days()
+        shape: (3,)
+        Series: '' [i64]
+        [
+                null
+                31
+                30
+        ]
         """
 
     def hours(self) -> pli.Series:
@@ -696,6 +767,29 @@ class DateTimeNameSpace:
         -------
         A series of dtype Int64
 
+        Examples
+        --------
+        >>> from datetime import datetime
+        >>> date = pl.date_range(
+        ...             datetime(2020, 1, 1), datetime(2020, 1, 4), "1d"
+        ...         )
+        shape: (4,)
+        Series: '' [datetime[μs]]
+        [
+                2020-01-01 00:00:00
+                2020-01-02 00:00:00
+                2020-01-03 00:00:00
+                2020-01-04 00:00:00
+        ]
+        >>> date.diff().dt.hours()
+        shape: (4,)
+        Series: '' [i64]
+        [
+                null
+                24
+                24
+                24
+        ]
         """
 
     def minutes(self) -> pli.Series:
@@ -706,6 +800,29 @@ class DateTimeNameSpace:
         -------
         A series of dtype Int64
 
+        Examples
+        --------
+        >>> from datetime import datetime
+        >>> date = pl.date_range(
+        ...             datetime(2020, 1, 1), datetime(2020, 1, 4), "1d"
+        ...         )
+        shape: (4,)
+        Series: '' [datetime[μs]]
+        [
+                2020-01-01 00:00:00
+                2020-01-02 00:00:00
+                2020-01-03 00:00:00
+                2020-01-04 00:00:00
+        ]
+        >>> date.diff().dt.minutes()
+        shape: (4,)
+        Series: '' [i64]
+        [
+                null
+                1440
+                1440
+                1440
+        ]
         """
 
     def seconds(self) -> pli.Series:
@@ -716,6 +833,31 @@ class DateTimeNameSpace:
         -------
         A series of dtype Int64
 
+        Examples
+        --------
+        >>> from datetime import datetime
+        >>> date = pl.date_range(
+        ...             datetime(2020, 1, 1), datetime(2020, 1, 1, 0, 4, 0), "1m"
+        ...         )
+        shape: (5,)
+        Series: '' [datetime[μs]]
+        [
+                2020-01-01 00:00:00
+                2020-01-01 00:01:00
+                2020-01-01 00:02:00
+                2020-01-01 00:03:00
+                2020-01-01 00:04:00
+        ]
+        >>> date.diff().dt.seconds()
+        shape: (5,)
+        Series: '' [i64]
+        [
+                null
+                60
+                60
+                60
+                60
+        ]
         """
 
     def milliseconds(self) -> pli.Series:
@@ -726,6 +868,27 @@ class DateTimeNameSpace:
         -------
         A series of dtype Int64
 
+        Examples
+        --------
+        >>> from datetime import datetime
+        >>> date = pl.date_range(
+        ...             datetime(2020, 1, 1), datetime(2020, 1, 1, 0, 0, 1, 0), "1ms"
+        ...         )[:3]
+        shape: (3,)
+        Series: '' [datetime[μs]]
+        [
+                2020-01-01 00:00:00
+                2020-01-01 00:00:00.001
+                2020-01-01 00:00:00.002
+        ]
+        >>> date.diff().dt.milliseconds()
+        shape: (3,)
+        Series: '' [i64]
+        [
+                null
+                1
+                1
+        ]
         """
 
     def microseconds(self) -> pli.Series:
@@ -736,6 +899,27 @@ class DateTimeNameSpace:
         -------
         A series of dtype Int64
 
+        Examples
+        --------
+        >>> from datetime import datetime
+        >>> date = pl.date_range(
+        ...             datetime(2020, 1, 1), datetime(2020, 1, 1, 0, 0, 1, 0), "1ms"
+        ...         )[:3]
+        shape: (3,)
+        Series: '' [datetime[μs]]
+        [
+                2020-01-01 00:00:00
+                2020-01-01 00:00:00.001
+                2020-01-01 00:00:00.002
+        ]
+        >>> date.diff().dt.microseconds()
+        shape: (3,)
+        Series: '' [i64]
+        [
+                null
+                1000
+                1000
+        ]
         """
 
     def nanoseconds(self) -> pli.Series:
@@ -746,6 +930,27 @@ class DateTimeNameSpace:
         -------
         A series of dtype Int64
 
+        Examples
+        --------
+        >>> from datetime import datetime
+        >>> date = pl.date_range(
+        ...             datetime(2020, 1, 1), datetime(2020, 1, 1, 0, 0, 1, 0), "1ms"
+        ...         )[:3]
+        shape: (3,)
+        Series: '' [datetime[μs]]
+        [
+                2020-01-01 00:00:00
+                2020-01-01 00:00:00.001
+                2020-01-01 00:00:00.002
+        ]
+        >>> date.diff().dt.nanoseconds()
+        shape: (3,)
+        Series: '' [i64]
+        [
+                null
+                1000000
+                1000000
+        ]
         """
 
     def offset_by(self, by: str) -> pli.Series:
@@ -777,6 +982,44 @@ class DateTimeNameSpace:
         -------
         Date/Datetime expression
 
+        Examples
+        --------
+        >>> from datetime import datetime
+        >>> dates = pl.date_range(
+        ...             datetime(2000, 1, 1), datetime(2005, 1, 1), "1y"
+        ...         )
+        shape: (6,)
+        Series: '' [datetime[μs]]
+        [
+                2000-01-01 00:00:00
+                2001-01-01 00:00:00
+                2002-01-01 00:00:00
+                2003-01-01 00:00:00
+                2004-01-01 00:00:00
+                2005-01-01 00:00:00
+        ]
+        >>> dates.dt.offset_by("1y").alias("date_plus_1y")
+        shape: (6,)
+        Series: 'date_plus_1y' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2002-01-01 00:00:00
+                2003-01-01 00:00:00
+                2004-01-01 00:00:00
+                2005-01-01 00:00:00
+                2006-01-01 00:00:00
+        ]
+        >>> dates.dt.offset_by("-1y2mo").alias("date_minus_1y_2mon")
+        shape: (6,)
+        Series: 'date_minus_1y_2mon' [datetime[μs]]
+        [
+                1998-11-01 00:00:00
+                1999-11-01 00:00:00
+                2000-11-01 00:00:00
+                2001-11-01 00:00:00
+                2002-11-01 00:00:00
+                2003-11-01 00:00:00
+        ]
         """
 
     def truncate(
