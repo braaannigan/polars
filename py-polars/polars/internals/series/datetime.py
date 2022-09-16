@@ -26,22 +26,83 @@ class DateTimeNameSpace:
         return s[item]
 
     def min(self) -> date | datetime | timedelta:
-        """Return minimum as python DateTime."""
+        """Return minimum as python DateTime.
+
+        Examples
+        --------
+        >>> from datetime import datetime
+        >>> date = pl.date_range(datetime(2001, 1, 1), datetime(2001, 1, 3), "1d")
+        shape: (3,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-01-02 00:00:00
+                2001-01-03 00:00:00
+        ]
+        >>> date.dt.min()
+        datetime.datetime(2001, 1, 1, 0, 0)
+        """
         # we can ignore types because we are certain we get a logical type
         return pli.wrap_s(self._s).min()  # type: ignore[return-value]
 
     def max(self) -> date | datetime | timedelta:
-        """Return maximum as python DateTime."""
+        """Return maximum as python DateTime.
+
+        Examples
+        --------
+        >>> from datetime import datetime
+        >>> date = pl.date_range(datetime(2001, 1, 1), datetime(2001, 1, 3), "1d")
+        shape: (3,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-01-02 00:00:00
+                2001-01-03 00:00:00
+        ]
+        >>> date.dt.max()
+        datetime.datetime(2001, 1, 3, 0, 0)
+        """
+
         return pli.wrap_s(self._s).max()  # type: ignore[return-value]
 
     def median(self) -> date | datetime | timedelta:
-        """Return median as python DateTime."""
+        """Return median as python DateTime.
+
+        Examples
+        --------
+        >>> from datetime import datetime
+        >>> date = pl.date_range(datetime(2001, 1, 1), datetime(2001, 1, 3), "1d")
+        shape: (3,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-01-02 00:00:00
+                2001-01-03 00:00:00
+        ]
+        >>> date.dt.median()
+        datetime.datetime(2001, 1, 2, 0, 0)
+        """
+
         s = pli.wrap_s(self._s)
         out = int(s.median())
         return _to_python_datetime(out, s.dtype, s.time_unit)
 
     def mean(self) -> date | datetime:
-        """Return mean as python DateTime."""
+        """Return mean as python DateTime.
+        Examples
+        --------
+        >>> from datetime import datetime
+        >>> date = pl.date_range(datetime(2001, 1, 1), datetime(2001, 1, 3), "1d")
+        shape: (3,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-01-02 00:00:00
+                2001-01-03 00:00:00
+        ]
+        >>> date.dt.mean()
+        datetime.datetime(2001, 1, 2, 0, 0)
+        """
         s = pli.wrap_s(self._s)
         out = int(s.mean())
         return _to_python_datetime(out, s.dtype, s.time_unit)
@@ -106,23 +167,16 @@ class DateTimeNameSpace:
         >>> from datetime import timedelta, datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2002, 7, 1)
-        >>> df = pl.DataFrame({"date": pl.date_range(start, stop, timedelta(days=180))})
-        >>> df
-        shape: (4, 1)
-        ┌─────────────────────┐
-        │ date                │
-        │ ---                 │
-        │ datetime[μs]        │
-        ╞═════════════════════╡
-        │ 2001-01-01 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-06-30 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-12-27 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2002-06-25 00:00:00 │
-        └─────────────────────┘
-        >>> df["date"].dt.year()
+        >>> date = pl.date_range(start, stop, timedelta(days=180))
+        shape: (4,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-06-30 00:00:00
+                2001-12-27 00:00:00
+                2002-06-25 00:00:00
+        ]
+        >>> date.dt.year()
         shape: (4,)
         Series: 'date' [i32]
         [
@@ -150,30 +204,25 @@ class DateTimeNameSpace:
         --------
         >>> from datetime import timedelta, datetime
         >>> start = datetime(2001, 1, 1)
-        >>> stop = datetime(2002, 6, 1)
-        >>> df = pl.DataFrame({"date": pl.date_range(start, stop, timedelta(days=180))})
-        >>> df
-        shape: (3, 1)
-        ┌─────────────────────┐
-        │ date                │
-        │ ---                 │
-        │ datetime[μs]        │
-        ╞═════════════════════╡
-        │ 2001-01-01 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-06-30 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-12-27 00:00:00 │
-        └─────────────────────┘
-        >>> df["date"].dt.quarter()
-        shape: (3,)
-        Series: 'date' [u32]
+        >>> stop = datetime(2001, 4, 1)
+        >>> date = pl.date_range(start, stop, interval='1mo')
+        shape: (4,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-02-01 00:00:00
+                2001-03-01 00:00:00
+                2001-04-01 00:00:00
+        ]
+        >>> date.dt.quarter()
+        shape: (4,)
+        Series: '' [u32]
         [
                 1
+                1
+                1
                 2
-                4
-        ]
-        """
+        ]"""
 
     def month(self) -> pli.Series:
         """
@@ -193,27 +242,24 @@ class DateTimeNameSpace:
         >>> from datetime import timedelta, datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 4, 1)
-        >>> df = pl.DataFrame({"date": pl.date_range(start, stop, timedelta(days=31))})
-        >>> df
-        shape: (3, 1)
-        ┌─────────────────────┐
-        │ date                │
-        │ ---                 │
-        │ datetime[μs]        │
-        ╞═════════════════════╡
-        │ 2001-01-01 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-02-01 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-03-04 00:00:00 │
-        └─────────────────────┘
-        >>> df["date"].dt.month()
-        shape: (3,)
-        Series: 'date' [u32]
+        >>> date = pl.date_range(start, stop, interval='1mo')
+        shape: (4,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-02-01 00:00:00
+                2001-03-01 00:00:00
+                2001-04-01 00:00:00
+        ]
+
+        >>> date.dt.month()
+        shape: (4,)
+        Series: '' [u32]
         [
                 1
                 2
                 3
+                4
         ]
         """
 
@@ -235,27 +281,23 @@ class DateTimeNameSpace:
         >>> from datetime import timedelta, datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 4, 1)
-        >>> df = pl.DataFrame({"date": pl.date_range(start, stop, timedelta(days=31))})
-        >>> df
-        shape: (3, 1)
-        ┌─────────────────────┐
-        │ date                │
-        │ ---                 │
-        │ datetime[μs]        │
-        ╞═════════════════════╡
-        │ 2001-01-01 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-02-01 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-03-04 00:00:00 │
-        └─────────────────────┘
-        >>> df["date"].dt.week()
-        shape: (3,)
-        Series: 'date' [u32]
+        >>> date = pl.date_range(start, stop, interval="1mo")
+        shape: (4,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-02-01 00:00:00
+                2001-03-01 00:00:00
+                2001-04-01 00:00:00
+        ]
+        >>> date.dt.week()
+        shape: (4,)
+        Series: '' [u32]
         [
                 1
                 5
                 9
+                13
         ]
         """
 
@@ -275,27 +317,29 @@ class DateTimeNameSpace:
         --------
         >>> from datetime import timedelta, datetime
         >>> start = datetime(2001, 1, 1)
-        >>> stop = datetime(2001, 1, 9)
-        >>> df = pl.DataFrame({"date": pl.date_range(start, stop, timedelta(days=3))})
-        >>> df
-        shape: (3, 1)
-        ┌─────────────────────┐
-        │ date                │
-        │ ---                 │
-        │ datetime[μs]        │
-        ╞═════════════════════╡
-        │ 2001-01-01 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-01-04 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-01-07 00:00:00 │
-        └─────────────────────┘
-        >>> df["date"].dt.weekday()
-        shape: (3,)
-        Series: 'date' [u32]
+        >>> stop = datetime(2001, 1, 7)
+        >>> date = pl.date_range(start, stop, interval="1d")
+        shape: (7,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-01-02 00:00:00
+                2001-01-03 00:00:00
+                2001-01-04 00:00:00
+                2001-01-05 00:00:00
+                2001-01-06 00:00:00
+                2001-01-07 00:00:00
+        ]
+        >>> date.dt.weekday()
+        shape: (7,)
+        Series: '' [u32]
         [
                 0
+                1
+                2
                 3
+                4
+                5
                 6
         ]
         """
@@ -315,30 +359,28 @@ class DateTimeNameSpace:
 
         Examples
         --------
-        >>> from datetime import timedelta, datetime
+        >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 1, 9)
-        >>> df = pl.DataFrame({"date": pl.date_range(start, stop, timedelta(days=3))})
-        >>> df
-        shape: (3, 1)
-        ┌─────────────────────┐
-        │ date                │
-        │ ---                 │
-        │ datetime[μs]        │
-        ╞═════════════════════╡
-        │ 2001-01-01 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-01-04 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-01-07 00:00:00 │
-        └─────────────────────┘
-        >>> df["date"].dt.day()
-        shape: (3,)
-        Series: 'date' [u32]
+        >>> date = pl.date_range(start, stop, interval = "2d")
+        shape: (5,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-01-03 00:00:00
+                2001-01-05 00:00:00
+                2001-01-07 00:00:00
+                2001-01-09 00:00:00
+        ]
+        >>> date.dt.day()
+        shape: (5,)
+        Series: '' [u32]
         [
                 1
-                4
+                3
+                5
                 7
+                9
         ]
         """
 
@@ -359,28 +401,22 @@ class DateTimeNameSpace:
         --------
         >>> from datetime import timedelta, datetime
         >>> start = datetime(2001, 1, 1)
-        >>> stop = datetime(2001, 1, 9)
-        >>> df = pl.DataFrame({"date": pl.date_range(start, stop, timedelta(days=3))})
-        >>> df
-        shape: (3, 1)
-        ┌─────────────────────┐
-        │ date                │
-        │ ---                 │
-        │ datetime[μs]        │
-        ╞═════════════════════╡
-        │ 2001-01-01 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-01-04 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-01-07 00:00:00 │
-        └─────────────────────┘
-        >>> df["date"].dt.ordinal_day()
+        >>> stop = datetime(2001, 3, 1)
+        >>> date = pl.date_range(start, stop, interval="1mo")
         shape: (3,)
-        Series: 'date' [u32]
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-02-01 00:00:00
+                2001-03-01 00:00:00
+        ]
+        >>> date.dt.ordinal_day()
+        shape: (3,)
+        Series: '' [u32]
         [
                 1
-                4
-                7
+                32
+                60
         ]
         """
 
@@ -398,30 +434,26 @@ class DateTimeNameSpace:
 
         Examples
         --------
-        >>> from datetime import timedelta, datetime
+        >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
-        >>> stop = datetime(2001, 1, 2)
-        >>> df = pl.DataFrame({"date": pl.date_range(start, stop, timedelta(hours=12))})
-        >>> df
-        shape: (3, 1)
-        ┌─────────────────────┐
-        │ date                │
-        │ ---                 │
-        │ datetime[μs]        │
-        ╞═════════════════════╡
-        │ 2001-01-01 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-01-01 12:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-01-02 00:00:00 │
-        └─────────────────────┘
-        >>> df["date"].dt.hour()
-        shape: (3,)
-        Series: 'date' [u32]
+        >>> stop = datetime(2001, 1, 1, 3)
+        >>> date = pl.date_range(start, stop, interval="1h")
+        shape: (4,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-01-01 01:00:00
+                2001-01-01 02:00:00
+                2001-01-01 03:00:00
+        ]
+        >>> date.dt.hour()
+        shape: (4,)
+        Series: '' [u32]
         [
                 0
-                12
-                0
+                1
+                2
+                3
         ]
         """
 
@@ -442,23 +474,15 @@ class DateTimeNameSpace:
         >>> from datetime import timedelta, datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 1, 1, 0, 4, 0)
-        >>> df = pl.DataFrame(
-        ...     {"date": pl.date_range(start, stop, timedelta(minutes=2))}
-        ... )
-        >>> df
-        shape: (3, 1)
-        ┌─────────────────────┐
-        │ date                │
-        │ ---                 │
-        │ datetime[μs]        │
-        ╞═════════════════════╡
-        │ 2001-01-01 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-01-01 00:02:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-01-01 00:04:00 │
-        └─────────────────────┘
-        >>> df["date"].dt.minute()
+        >>> date = pl.date_range(start, stop, interval ="2m")
+        shape: (3,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-01-01 00:02:00
+                2001-01-01 00:04:00
+        ]
+        >>> date.dt.minute()
         shape: (3,)
         Series: 'date' [u32]
         [
@@ -485,23 +509,15 @@ class DateTimeNameSpace:
         >>> from datetime import timedelta, datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 1, 1, 0, 0, 4)
-        >>> df = pl.DataFrame(
-        ...     {"date": pl.date_range(start, stop, timedelta(seconds=2))}
-        ... )
-        >>> df
-        shape: (3, 1)
-        ┌─────────────────────┐
-        │ date                │
-        │ ---                 │
-        │ datetime[μs]        │
-        ╞═════════════════════╡
-        │ 2001-01-01 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-01-01 00:00:02 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-01-01 00:00:04 │
-        └─────────────────────┘
-        >>> df["date"].dt.second()
+        >>> date = pl.date_range(start, stop, interval = "2s")
+        shape: (3,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-01-01 00:00:02
+                2001-01-01 00:00:04
+        ]
+        >>> date.dt.second()
         shape: (3,)
         Series: 'date' [u32]
         [
@@ -526,20 +542,21 @@ class DateTimeNameSpace:
 
         Examples
         --------
-        >>> df = pl.DataFrame({'date':['2022-01-01 00:00:00.001']}).with_column(pl.col('date').str.strptime(pl.Datetime,fmt='%F %H:%M:%S%.3f'))
-        shape: (1, 1)
-        ┌─────────────────────────┐
-        │ date                    │
-        │ ---                     │
-        │ datetime[μs]            │
-        ╞═════════════════════════╡
-        │ 2022-01-01 00:00:00.001 │
-        └─────────────────────────┘
-        >>> df['date'].dt.nanosecond()
-        shape: (1,)
-        Series: 'date' [u32]
+        >>> date = pl.date_range(start, start+timedelta(milliseconds=1), interval = "1ns")[:3]
+        shape: (3,)
+        Series: '' [datetime[ns]]
         [
-                1000000
+                2001-01-01 00:00:00
+                2001-01-01 00:00:00.000000001
+                2001-01-01 00:00:00.000000002
+        ]
+        >>> date.dt.nanosecond()
+        shape: (3,)
+        Series: '' [u32]
+        [
+                0
+                1
+                2
         ]
         """
 
@@ -554,10 +571,10 @@ class DateTimeNameSpace:
 
         Examples
         --------
-        >>> from datetime import timedelta, datetime
+        >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 1, 3)
-        >>> date = pl.date_range(start, stop, timedelta(days=1))
+        >>> date = pl.date_range(start, stop, interval="1d")
         shape: (3,)
         Series: '' [datetime[μs]]
         [
@@ -594,10 +611,10 @@ class DateTimeNameSpace:
 
         Examples
         --------
-        >>> from datetime import timedelta, datetime
+        >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 1, 3)
-        >>> date = pl.date_range(start, stop, timedelta(days=1))
+        >>> date = pl.date_range(start, stop, interval="1d")
         shape: (3,)
         Series: '' [datetime[μs]]
         [
