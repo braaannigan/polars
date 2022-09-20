@@ -26,7 +26,8 @@ class DateTimeNameSpace:
         return s[item]
 
     def min(self) -> date | datetime | timedelta:
-        """Return minimum as python DateTime.
+        """
+        Return minimum as python DateTime.
 
         Examples
         --------
@@ -41,12 +42,14 @@ class DateTimeNameSpace:
         ]
         >>> date.dt.min()
         datetime.datetime(2001, 1, 1, 0, 0)
+
         """
         # we can ignore types because we are certain we get a logical type
         return pli.wrap_s(self._s).min()  # type: ignore[return-value]
 
     def max(self) -> date | datetime | timedelta:
-        """Return maximum as python DateTime.
+        """
+        Return maximum as python DateTime.
 
         Examples
         --------
@@ -61,12 +64,13 @@ class DateTimeNameSpace:
         ]
         >>> date.dt.max()
         datetime.datetime(2001, 1, 3, 0, 0)
-        """
 
+        """
         return pli.wrap_s(self._s).max()  # type: ignore[return-value]
 
     def median(self) -> date | datetime | timedelta:
-        """Return median as python DateTime.
+        """
+        Return median as python DateTime.
 
         Examples
         --------
@@ -81,14 +85,16 @@ class DateTimeNameSpace:
         ]
         >>> date.dt.median()
         datetime.datetime(2001, 1, 2, 0, 0)
-        """
 
+        """
         s = pli.wrap_s(self._s)
         out = int(s.median())
         return _to_python_datetime(out, s.dtype, s.time_unit)
 
     def mean(self) -> date | datetime:
-        """Return mean as python DateTime.
+        """
+        Return mean as python DateTime.
+
         Examples
         --------
         >>> from datetime import datetime
@@ -102,6 +108,7 @@ class DateTimeNameSpace:
         ]
         >>> date.dt.mean()
         datetime.datetime(2001, 1, 2, 0, 0)
+
         """
         s = pli.wrap_s(self._s)
         out = int(s.mean())
@@ -141,6 +148,7 @@ class DateTimeNameSpace:
                 "2001-01-03"
                 "2001-01-04"
         ]
+
         """
 
     def year(self) -> pli.Series:
@@ -174,6 +182,7 @@ class DateTimeNameSpace:
                 2001
                 2002
         ]
+
         """
 
     def quarter(self) -> pli.Series:
@@ -193,7 +202,7 @@ class DateTimeNameSpace:
         >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 4, 1)
-        >>> date = pl.date_range(start, stop, interval='1mo')
+        >>> date = pl.date_range(start, stop, interval="1mo")
         shape: (4,)
         Series: '' [datetime[μs]]
         [
@@ -210,7 +219,9 @@ class DateTimeNameSpace:
                 1
                 1
                 2
-        ]"""
+        ]
+
+        """
 
     def month(self) -> pli.Series:
         """
@@ -230,7 +241,7 @@ class DateTimeNameSpace:
         >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 4, 1)
-        >>> date = pl.date_range(start, stop, interval='1mo')
+        >>> date = pl.date_range(start, stop, interval="1mo")
         shape: (4,)
         Series: '' [datetime[μs]]
         [
@@ -249,6 +260,7 @@ class DateTimeNameSpace:
                 3
                 4
         ]
+
         """
 
     def week(self) -> pli.Series:
@@ -287,6 +299,7 @@ class DateTimeNameSpace:
                 9
                 13
         ]
+
         """
 
     def weekday(self) -> pli.Series:
@@ -330,6 +343,7 @@ class DateTimeNameSpace:
                 5
                 6
         ]
+
         """
 
     def day(self) -> pli.Series:
@@ -350,7 +364,7 @@ class DateTimeNameSpace:
         >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 1, 9)
-        >>> date = pl.date_range(start, stop, interval = "2d")
+        >>> date = pl.date_range(start, stop, interval="2d")
         shape: (5,)
         Series: '' [datetime[μs]]
         [
@@ -370,6 +384,7 @@ class DateTimeNameSpace:
                 7
                 9
         ]
+
         """
 
     def ordinal_day(self) -> pli.Series:
@@ -406,6 +421,7 @@ class DateTimeNameSpace:
                 32
                 60
         ]
+
         """
 
     def hour(self) -> pli.Series:
@@ -443,6 +459,7 @@ class DateTimeNameSpace:
                 2
                 3
         ]
+
         """
 
     def minute(self) -> pli.Series:
@@ -462,7 +479,7 @@ class DateTimeNameSpace:
         >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 1, 1, 0, 4, 0)
-        >>> date = pl.date_range(start, stop, interval ="2m")
+        >>> date = pl.date_range(start, stop, interval="2m")
         shape: (3,)
         Series: '' [datetime[μs]]
         [
@@ -478,6 +495,7 @@ class DateTimeNameSpace:
                 2
                 4
         ]
+
         """
 
     def second(self) -> pli.Series:
@@ -497,7 +515,7 @@ class DateTimeNameSpace:
         >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 1, 1, 0, 0, 4)
-        >>> date = pl.date_range(start, stop, interval = "2s")
+        >>> date = pl.date_range(start, stop, interval="2s")
         shape: (3,)
         Series: '' [datetime[μs]]
         [
@@ -513,6 +531,7 @@ class DateTimeNameSpace:
                 2
                 4
         ]
+
         """
 
     def nanosecond(self) -> pli.Series:
@@ -530,7 +549,9 @@ class DateTimeNameSpace:
 
         Examples
         --------
-        >>> date = pl.date_range(start, start+timedelta(milliseconds=1), interval = "1ns")[:3]
+        >>> date = pl.date_range(
+        ...     start, start + timedelta(milliseconds=1), interval="1ns"
+        ... )[:3]
         shape: (3,)
         Series: '' [datetime[ns]]
         [
@@ -546,6 +567,7 @@ class DateTimeNameSpace:
                 1
                 2
         ]
+
         """
 
     def timestamp(self, tu: TimeUnit = "us") -> pli.Series:
@@ -586,6 +608,7 @@ class DateTimeNameSpace:
                 978393600000
                 978480000000
          ]
+
         """
 
     def epoch(self, tu: EpochTimeUnit = "us") -> pli.Series:
@@ -626,6 +649,7 @@ class DateTimeNameSpace:
                 978393600
                 978480000
         ]
+
         """
 
     def with_time_unit(self, tu: TimeUnit) -> pli.Series:
@@ -643,7 +667,9 @@ class DateTimeNameSpace:
         Examples
         --------
         >>> from datetime import datetime
-        >>> date = pl.date_range(datetime(2001, 1, 1), datetime(2001, 1, 3), "1d", time_unit="ns")
+        >>> date = pl.date_range(
+        ...     datetime(2001, 1, 1), datetime(2001, 1, 3), "1d", time_unit="ns"
+        ... )
         shape: (3,)
         Series: '' [datetime[ns]]
         [
@@ -659,6 +685,7 @@ class DateTimeNameSpace:
                 +32974-01-22 00:00:00
                 +32976-10-18 00:00:00
         ]
+
         """
 
     def cast_time_unit(self, tu: TimeUnit) -> pli.Series:
@@ -673,9 +700,7 @@ class DateTimeNameSpace:
         Examples
         --------
         >>> from datetime import datetime
-        >>> date = pl.date_range(
-        ...             datetime(2001, 1, 1), datetime(2001, 1, 3), "1d"
-        ...         )
+        >>> date = pl.date_range(datetime(2001, 1, 1), datetime(2001, 1, 3), "1d")
         shape: (3,)
         Series: '' [datetime[μs]]
         [
@@ -699,6 +724,7 @@ class DateTimeNameSpace:
                 2001-01-02 00:00:00
                 2001-01-03 00:00:00
         ]
+
         """
 
     def with_time_zone(self, tz: str | None) -> pli.Series:
@@ -713,9 +739,7 @@ class DateTimeNameSpace:
         Examples
         --------
         >>> from datetime import datetime
-        >>> date = pl.date_range(
-        ...             datetime(2020, 3, 1), datetime(2020, 5, 1), "1mo"
-        ...         )
+        >>> date = pl.date_range(datetime(2020, 3, 1), datetime(2020, 5, 1), "1mo")
         shape: (3,)
         Series: '' [datetime[μs]]
         [
@@ -731,6 +755,7 @@ class DateTimeNameSpace:
                 2020-04-01 00:00:00 BST
                 2020-05-01 00:00:00 BST
         ]
+
         """
 
     def days(self) -> pli.Series:
@@ -744,9 +769,7 @@ class DateTimeNameSpace:
         Examples
         --------
         >>> from datetime import datetime
-        >>> date = pl.date_range(
-        ...             datetime(2020, 3, 1), datetime(2020, 5, 1), "1mo"
-        ...         )
+        >>> date = pl.date_range(datetime(2020, 3, 1), datetime(2020, 5, 1), "1mo")
         shape: (3,)
         Series: '' [datetime[μs]]
         [
@@ -762,6 +785,7 @@ class DateTimeNameSpace:
                 31
                 30
         ]
+
         """
 
     def hours(self) -> pli.Series:
@@ -775,9 +799,7 @@ class DateTimeNameSpace:
         Examples
         --------
         >>> from datetime import datetime
-        >>> date = pl.date_range(
-        ...             datetime(2020, 1, 1), datetime(2020, 1, 4), "1d"
-        ...         )
+        >>> date = pl.date_range(datetime(2020, 1, 1), datetime(2020, 1, 4), "1d")
         shape: (4,)
         Series: '' [datetime[μs]]
         [
@@ -795,6 +817,7 @@ class DateTimeNameSpace:
                 24
                 24
         ]
+
         """
 
     def minutes(self) -> pli.Series:
@@ -808,9 +831,7 @@ class DateTimeNameSpace:
         Examples
         --------
         >>> from datetime import datetime
-        >>> date = pl.date_range(
-        ...             datetime(2020, 1, 1), datetime(2020, 1, 4), "1d"
-        ...         )
+        >>> date = pl.date_range(datetime(2020, 1, 1), datetime(2020, 1, 4), "1d")
         shape: (4,)
         Series: '' [datetime[μs]]
         [
@@ -828,6 +849,7 @@ class DateTimeNameSpace:
                 1440
                 1440
         ]
+
         """
 
     def seconds(self) -> pli.Series:
@@ -842,8 +864,8 @@ class DateTimeNameSpace:
         --------
         >>> from datetime import datetime
         >>> date = pl.date_range(
-        ...             datetime(2020, 1, 1), datetime(2020, 1, 1, 0, 4, 0), "1m"
-        ...         )
+        ...     datetime(2020, 1, 1), datetime(2020, 1, 1, 0, 4, 0), "1m"
+        ... )
         shape: (5,)
         Series: '' [datetime[μs]]
         [
@@ -863,6 +885,7 @@ class DateTimeNameSpace:
                 60
                 60
         ]
+
         """
 
     def milliseconds(self) -> pli.Series:
@@ -877,8 +900,8 @@ class DateTimeNameSpace:
         --------
         >>> from datetime import datetime
         >>> date = pl.date_range(
-        ...             datetime(2020, 1, 1), datetime(2020, 1, 1, 0, 0, 1, 0), "1ms"
-        ...         )[:3]
+        ...     datetime(2020, 1, 1), datetime(2020, 1, 1, 0, 0, 1, 0), "1ms"
+        ... )[:3]
         shape: (3,)
         Series: '' [datetime[μs]]
         [
@@ -894,6 +917,7 @@ class DateTimeNameSpace:
                 1
                 1
         ]
+
         """
 
     def microseconds(self) -> pli.Series:
@@ -908,8 +932,8 @@ class DateTimeNameSpace:
         --------
         >>> from datetime import datetime
         >>> date = pl.date_range(
-        ...             datetime(2020, 1, 1), datetime(2020, 1, 1, 0, 0, 1, 0), "1ms"
-        ...         )[:3]
+        ...     datetime(2020, 1, 1), datetime(2020, 1, 1, 0, 0, 1, 0), "1ms"
+        ... )[:3]
         shape: (3,)
         Series: '' [datetime[μs]]
         [
@@ -925,6 +949,7 @@ class DateTimeNameSpace:
                 1000
                 1000
         ]
+
         """
 
     def nanoseconds(self) -> pli.Series:
@@ -939,8 +964,8 @@ class DateTimeNameSpace:
         --------
         >>> from datetime import datetime
         >>> date = pl.date_range(
-        ...             datetime(2020, 1, 1), datetime(2020, 1, 1, 0, 0, 1, 0), "1ms"
-        ...         )[:3]
+        ...     datetime(2020, 1, 1), datetime(2020, 1, 1, 0, 0, 1, 0), "1ms"
+        ... )[:3]
         shape: (3,)
         Series: '' [datetime[μs]]
         [
@@ -956,6 +981,7 @@ class DateTimeNameSpace:
                 1000000
                 1000000
         ]
+
         """
 
     def offset_by(self, by: str) -> pli.Series:
@@ -990,9 +1016,7 @@ class DateTimeNameSpace:
         Examples
         --------
         >>> from datetime import datetime
-        >>> dates = pl.date_range(
-        ...             datetime(2000, 1, 1), datetime(2005, 1, 1), "1y"
-        ...         )
+        >>> dates = pl.date_range(datetime(2000, 1, 1), datetime(2005, 1, 1), "1y")
         shape: (6,)
         Series: '' [datetime[μs]]
         [
@@ -1025,6 +1049,7 @@ class DateTimeNameSpace:
                 2002-11-01 00:00:00
                 2003-11-01 00:00:00
         ]
+
         """
 
     def truncate(

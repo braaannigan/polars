@@ -174,6 +174,7 @@ class ExprDateTimeNameSpace:
         ├╌╌╌╌╌╌╌╌╌╌╌╌┤
         │ 2001-01-04 │
         └────────────┘
+
         """
         return pli.wrap_expr(self._pyexpr.strftime(fmt))
 
@@ -702,7 +703,9 @@ class ExprDateTimeNameSpace:
 
         Examples
         --------
-        >>> df = pl.DataFrame({'date':['2022-01-01 00:00:00.001']}).with_column(pl.col('date').str.strptime(pl.Datetime,fmt='%F %H:%M:%S%.3f'))
+        >>> df = pl.DataFrame({"date": ["2022-01-01 00:00:00.001"]}).with_column(
+        ...     pl.col("date").str.strptime(pl.Datetime, fmt="%F %H:%M:%S%.3f")
+        ... )
         shape: (1, 1)
         ┌─────────────────────────┐
         │ date                    │
@@ -711,7 +714,7 @@ class ExprDateTimeNameSpace:
         ╞═════════════════════════╡
         │ 2022-01-01 00:00:00.001 │
         └─────────────────────────┘
-        >>> df.select(pl.col('date').dt.nanosecond())
+        >>> df.select(pl.col("date").dt.nanosecond())
         shape: (1, 1)
         ┌─────────┐
         │ date    │
@@ -720,6 +723,7 @@ class ExprDateTimeNameSpace:
         ╞═════════╡
         │ 1000000 │
         └─────────┘
+
         """
         return pli.wrap_expr(self._pyexpr.nanosecond())
 

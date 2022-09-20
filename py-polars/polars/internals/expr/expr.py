@@ -1784,8 +1784,8 @@ class Expr:
 
         Examples
         --------
-        >>> df = pl.DataFrame({'a':[3, 1, 2, 5, 8]})
-        >>> df.select(pl.col('a').top_k(3))
+        >>> df = pl.DataFrame({"a": [3, 1, 2, 5, 8]})
+        >>> df.select(pl.col("a").top_k(3))
         shape: (3, 1)
         ┌─────┐
         │ a   │
@@ -1798,6 +1798,7 @@ class Expr:
         ├╌╌╌╌╌┤
         │ 3   │
         └─────┘
+
         """
         return wrap_expr(self._pyexpr.top_k(k, reverse))
 
@@ -1899,10 +1900,10 @@ class Expr:
         ----------
         element
             Expression or scalar value.
+
         Examples
         --------
-        >>> df = pl.DataFrame({"a": [1,2,3,4,5]})
-        >>> # If we were to add a 3 what position should it be inserted to maintain order?
+        >>> df = pl.DataFrame({"a": [1, 2, 3, 4, 5]})
         >>> df.select(pl.col("a").search_sorted(3))
         shape: (1, 1)
         ┌─────┐
@@ -1912,6 +1913,7 @@ class Expr:
         ╞═════╡
         │ 2   │
         └─────┘
+
         """
         element = expr_to_lit_or_expr(element, str_to_lit=False)
         return wrap_expr(self._pyexpr.search_sorted(element._pyexpr))
@@ -3313,6 +3315,7 @@ class Expr:
         └─────┘
 
         """
+
         return wrap_expr(self._pyexpr.tail(n))
 
     def limit(self, n: int = 10) -> Expr:
@@ -3343,6 +3346,7 @@ class Expr:
         │ 3   │
         └─────┘
         """
+
         return self.head(n)
 
     def pow(self, exponent: int | float | pli.Series | Expr) -> Expr:
@@ -4651,6 +4655,7 @@ class Expr:
         ├╌╌╌╌╌╌╌╌╌╌╌┤
         │ -0.319312 │
         └───────────┘
+
         """
         return wrap_expr(self._pyexpr.rolling_skew(window_size, bias))
 
@@ -5041,6 +5046,7 @@ class Expr:
         ├╌╌╌╌╌┤
         │ 5   │
         └─────┘
+
         """
         return wrap_expr(self._pyexpr.clip_min(min_val))
 
@@ -5078,6 +5084,7 @@ class Expr:
         ├╌╌╌╌╌┤
         │ 3   │
         └─────┘
+
         """
         return wrap_expr(self._pyexpr.clip_max(max_val))
 
