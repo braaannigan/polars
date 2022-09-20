@@ -120,26 +120,19 @@ class DateTimeNameSpace:
 
         Examples
         --------
-        >>> from datetime import timedelta, datetime
+        >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 1, 4)
-        >>> df = pl.DataFrame({"date": pl.date_range(start, stop, timedelta(days=1))})
-        >>> df
-        shape: (4, 1)
-        ┌─────────────────────┐
-        │ date                │
-        │ ---                 │
-        │ datetime[μs]        │
-        ╞═════════════════════╡
-        │ 2001-01-01 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-01-02 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-01-03 00:00:00 │
-        ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-        │ 2001-01-04 00:00:00 │
-        └─────────────────────┘
-        >>> df["date"].dt.strftime(fmt="%Y-%m-%d")
+        >>> date = pl.date_range(start, stop, interval="1d")
+        shape: (4,)
+        Series: '' [datetime[μs]]
+        [
+                2001-01-01 00:00:00
+                2001-01-02 00:00:00
+                2001-01-03 00:00:00
+                2001-01-04 00:00:00
+        ]
+        >>> date.dt.strftime(fmt="%Y-%m-%d")
         shape: (4,)
         Series: 'date' [str]
         [
@@ -164,28 +157,23 @@ class DateTimeNameSpace:
 
         Examples
         --------
-        >>> from datetime import timedelta, datetime
+        >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
-        >>> stop = datetime(2002, 7, 1)
-        >>> date = pl.date_range(start, stop, timedelta(days=180))
-        shape: (4,)
+        >>> stop = datetime(2002, 1, 1)
+        >>> date = pl.date_range(start, stop, interval="1y")
+        shape: (2,)
         Series: '' [datetime[μs]]
         [
                 2001-01-01 00:00:00
-                2001-06-30 00:00:00
-                2001-12-27 00:00:00
-                2002-06-25 00:00:00
+                2002-01-01 00:00:00
         ]
         >>> date.dt.year()
-        shape: (4,)
-        Series: 'date' [i32]
+        shape: (2,)
+        Series: '' [i32]
         [
-                2001
-                2001
                 2001
                 2002
         ]
-
         """
 
     def quarter(self) -> pli.Series:
@@ -202,7 +190,7 @@ class DateTimeNameSpace:
 
         Examples
         --------
-        >>> from datetime import timedelta, datetime
+        >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 4, 1)
         >>> date = pl.date_range(start, stop, interval='1mo')
@@ -239,7 +227,7 @@ class DateTimeNameSpace:
 
         Examples
         --------
-        >>> from datetime import timedelta, datetime
+        >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 4, 1)
         >>> date = pl.date_range(start, stop, interval='1mo')
@@ -278,7 +266,7 @@ class DateTimeNameSpace:
 
         Examples
         --------
-        >>> from datetime import timedelta, datetime
+        >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 4, 1)
         >>> date = pl.date_range(start, stop, interval="1mo")
@@ -315,7 +303,7 @@ class DateTimeNameSpace:
 
         Examples
         --------
-        >>> from datetime import timedelta, datetime
+        >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 1, 7)
         >>> date = pl.date_range(start, stop, interval="1d")
@@ -399,7 +387,7 @@ class DateTimeNameSpace:
 
         Examples
         --------
-        >>> from datetime import timedelta, datetime
+        >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 3, 1)
         >>> date = pl.date_range(start, stop, interval="1mo")
@@ -471,7 +459,7 @@ class DateTimeNameSpace:
 
         Examples
         --------
-        >>> from datetime import timedelta, datetime
+        >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 1, 1, 0, 4, 0)
         >>> date = pl.date_range(start, stop, interval ="2m")
@@ -506,7 +494,7 @@ class DateTimeNameSpace:
 
         Examples
         --------
-        >>> from datetime import timedelta, datetime
+        >>> from datetime import datetime
         >>> start = datetime(2001, 1, 1)
         >>> stop = datetime(2001, 1, 1, 0, 0, 4)
         >>> date = pl.date_range(start, stop, interval = "2s")
