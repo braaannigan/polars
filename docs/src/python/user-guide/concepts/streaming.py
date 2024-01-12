@@ -18,7 +18,11 @@ q = (
     .group_by("species")
     .agg(pl.col("sepal_width").mean())
 )
-q.explain(streaming=True)
+print(
+    f"""
+{q.explain(streaming=True)}
+"""
+)
 # --8<-- [end:streaming_query_plan]
 
 
