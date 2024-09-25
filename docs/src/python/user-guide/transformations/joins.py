@@ -160,3 +160,29 @@ df_asof_tolerance_join = df_trades.join_asof(
 )
 print(df_asof_tolerance_join)
 # --8<-- [end:asof2]
+
+# --8<-- [start:join_where_df1]
+cars_df = pl.DataFrame(
+    {
+        "car_id": [1, 2, 3, 4, 5],
+        "model": ["Economy", "Compact", "Midsize", "Fullsize", "Luxury"],
+        "daily_rate": [30.00, 35.00, 40.00, 45.00, 60.00],
+    }
+)
+# --8<-- [end:join_where_df1]
+# --8<-- [start:join_where_df2]
+customers_df = pl.DataFrame(
+    {
+        "customer_id": [101, 102, 104],
+        "name": ["Alice", "Bob", "Diana"],
+        "budget_per_day": [38.00, 50.00, 55.00],
+    }
+)
+# --8<-- [end:join_where_df2]
+
+# --8<-- [start:join_where1]
+cars_in_budget_df = customers_df.join_where(
+    cars_df, pl.col("budget_per_day") >= pl.col("daily_rate")
+)
+print(cars_in_budget_df)
+# --8<-- [end:join_where1]

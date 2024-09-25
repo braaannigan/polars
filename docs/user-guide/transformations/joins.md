@@ -1,8 +1,12 @@
 # Joins
 
-## Join strategies
+Polars supports both equality and non-equality joins. Equality joins are the most common type of join and are used to
+combine two `DataFrames` based on a common column or columns. Non-equality joins are used to combine two `DataFrames` based on a
+condition that is not an equality condition such as a nearest key match.
+## Equality joins
+### Join strategies overview
 
-Polars supports the following join strategies by specifying the `how` argument:
+Polars supports the following equality join strategies by specifying the `how` argument to `join`:
 
 | Strategy | Description                                                                                                                                                                                                |
 | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -126,8 +130,6 @@ We can now create a `DataFrame` containing all possible combinations of the colo
 
 <br>
 
-The `inner`, `left`, `right`, `full` and `cross` join strategies are standard amongst dataframe libraries. We provide more
-details on the less familiar `semi`, `anti` and `asof` join strategies below.
 
 ### Semi join
 
@@ -180,7 +182,9 @@ the `df_repairs` `DataFrame`.
 --8<-- "python/user-guide/transformations/joins.py:anti"
 ```
 
-## Asof join
+## Inequality joins
+
+### Asof join
 
 An `asof` join is like a left join except that we match on nearest key rather than equal keys.
 In Polars we can do an asof join with the `join_asof` method.
@@ -227,3 +231,28 @@ trade so we set `tolerance = "1m"`.
 ```python exec="on" result="text" session="user-guide/transformations/joins"
 --8<-- "python/user-guide/transformations/joins.py:asof2"
 ```
+### Inequality join
+We can use `join_where` to perform an inequality join where we join rows based on a condition. For this example we 
+take an example of a car rental company finding cars that fit within the budgets of its customers. 
+
+The car rental company has one `DataFrame` showing their cars along with the daily
+rate they charge for each car. 
+{{code_block('user-guide/transformations/joins','join_where_df1',['DataFrame'])}}
+
+```python exec="on" result="text" session="user-guide/transformations/joins"
+--8<-- "python/user-guide/transformations/joins.py:join_where_df1"
+```
+
+The car rental company has another `DataFrame` showing their customers and the maximum daily rate they are
+willing to pay for a car.
+
+{{code_block('user-guide/transformations/joins','join_where_df2',['DataFrame'])}}
+
+```python exec="on" result="text" session="user-guide/transformations/joins"
+--8<-- "python/user-guide/transformations/joins.py:join_where_df2"
+```
+We can now create a `DataFrame` containing all cars that fit within the budget of each customer with a `join_where` join:
+
+{{code_block('user-guide/transformations/joins','join_where1',['join_where'])}}
+
+```python exec="on" result="text" session="user-guide/transformations/joins"
