@@ -282,7 +282,7 @@ def test_collapse_joins() -> None:
     )
 
 
-@pytest.mark.slow
+@pytest.mark.slow()
 def test_collapse_joins_combinations() -> None:
     # This just tests all possible combinations for expressions on a cross join.
 

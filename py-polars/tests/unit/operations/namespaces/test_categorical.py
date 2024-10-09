@@ -60,7 +60,7 @@ def test_categorical_lexical_ordering_after_concat() -> None:
         }
 
 
-@pytest.mark.may_fail_auto_streaming
+@pytest.mark.may_fail_auto_streaming()
 def test_sort_categoricals_6014_internal() -> None:
     with pl.StringCache():
         # create basic categorical

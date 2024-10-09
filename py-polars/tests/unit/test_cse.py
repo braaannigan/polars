@@ -145,7 +145,7 @@ def test_cse_9630() -> None:
     assert_frame_equal(result, expected)
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_schema_row_index_cse() -> None:
     csv_a = NamedTemporaryFile()
     csv_a.write(b"A,B\nGr1,A\nGr1,B")
@@ -173,7 +173,7 @@ def test_schema_row_index_cse() -> None:
     assert_frame_equal(result, expected)
 
 
-@pytest.mark.debug
+@pytest.mark.debug()
 def test_cse_expr_selection_context() -> None:
     q = pl.LazyFrame(
         {
@@ -626,7 +626,7 @@ def test_cse_15548() -> None:
     assert len(ldf3.collect(comm_subplan_elim=True)) == 4
 
 
-@pytest.mark.debug
+@pytest.mark.debug()
 def test_cse_and_schema_update_projection_pd() -> None:
     df = pl.LazyFrame({"a": [1, 2], "b": [99, 99]})
 
@@ -646,7 +646,7 @@ def test_cse_and_schema_update_projection_pd() -> None:
     assert num_cse_occurrences(q.explain(comm_subexpr_elim=True)) == 1
 
 
-@pytest.mark.debug
+@pytest.mark.debug()
 def test_cse_predicate_self_join(capfd: Any, monkeypatch: Any) -> None:
     monkeypatch.setenv("POLARS_VERBOSE", "1")
     y = pl.LazyFrame({"a": [1], "b": [2], "y": [3]})
@@ -694,7 +694,7 @@ def test_cse_no_projection_15980() -> None:
     ) == {"x": ["a", "a"]}
 
 
-@pytest.mark.debug
+@pytest.mark.debug()
 def test_cse_series_collision_16138() -> None:
     holdings = pl.DataFrame(
         {
@@ -777,7 +777,7 @@ def test_cse_chunks_18124() -> None:
     ).collect().shape == (4, 4)
 
 
-@pytest.mark.may_fail_auto_streaming
+@pytest.mark.may_fail_auto_streaming()
 def test_eager_cse_during_struct_expansion_18411() -> None:
     df = pl.DataFrame({"foo": [0, 0, 0, 1, 1]})
     vc = pl.col("foo").value_counts()

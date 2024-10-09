@@ -57,7 +57,7 @@ def test_from_to_buffer(
 @pytest.mark.parametrize("compression", COMPRESSIONS)
 @pytest.mark.parametrize("path_as_string", [True, False])
 @pytest.mark.parametrize("stream", [True, False])
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_from_to_file(
     df: pl.DataFrame,
     compression: IpcCompression,
@@ -76,7 +76,7 @@ def test_from_to_file(
 
 
 @pytest.mark.parametrize("stream", [True, False])
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_select_columns_from_file(
     df: pl.DataFrame, tmp_path: Path, stream: bool
 ) -> None:
@@ -152,7 +152,7 @@ def test_ipc_schema(compression: IpcCompression) -> None:
     assert pl.read_ipc_schema(f) == expected
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 @pytest.mark.parametrize("compression", COMPRESSIONS)
 @pytest.mark.parametrize("path_as_string", [True, False])
 def test_ipc_schema_from_file(
@@ -207,7 +207,7 @@ def test_ipc_column_order(stream: bool) -> None:
     assert read_ipc(stream, f, columns=columns).columns == columns
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_glob_ipc(df: pl.DataFrame, tmp_path: Path) -> None:
     file_path = tmp_path / "small.ipc"
     df.write_ipc(file_path)
@@ -230,7 +230,7 @@ def test_from_float16() -> None:
     assert pl.read_ipc(f, use_pyarrow=False).dtypes == [pl.Float32]
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_binview_ipc_mmap(tmp_path: Path) -> None:
     df = pl.DataFrame({"foo": ["aa" * 10, "bb", None, "small", "big" * 20]})
     file_path = tmp_path / "dump.ipc"
@@ -263,7 +263,7 @@ def test_struct_nested_enum() -> None:
     assert df.get_column("struct_cat").dtype == dtype
 
 
-@pytest.mark.slow
+@pytest.mark.slow()
 def test_ipc_view_gc_14448() -> None:
     f = io.BytesIO()
     # This size was required to trigger the bug
@@ -275,8 +275,8 @@ def test_ipc_view_gc_14448() -> None:
     assert_frame_equal(pl.read_ipc(f), df)
 
 
-@pytest.mark.slow
-@pytest.mark.write_disk
+@pytest.mark.slow()
+@pytest.mark.write_disk()
 @pytest.mark.parametrize("stream", [True, False])
 def test_read_ipc_only_loads_selected_columns(
     memory_usage_without_pyarrow: MemoryUsage,
@@ -314,7 +314,7 @@ def test_read_ipc_only_loads_selected_columns(
     assert 16_000_000 < memory_usage_without_pyarrow.get_peak() < 23_000_000
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_ipc_decimal_15920(
     tmp_path: Path,
 ) -> None:

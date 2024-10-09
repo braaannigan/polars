@@ -164,7 +164,6 @@ print(df_asof_tolerance_join)
 # --8<-- [start:join_where_df1]
 cars_df = pl.DataFrame(
     {
-        "car_id": [1, 2, 3, 4, 5],
         "model": ["Economy", "Compact", "Midsize", "Fullsize", "Luxury"],
         "daily_rate": [30.00, 35.00, 40.00, 45.00, 60.00],
     }
@@ -173,7 +172,6 @@ cars_df = pl.DataFrame(
 # --8<-- [start:join_where_df2]
 customers_df = pl.DataFrame(
     {
-        "customer_id": [101, 102, 104],
         "name": ["Alice", "Bob", "Diana"],
         "budget_per_day": [38.00, 50.00, 55.00],
     }

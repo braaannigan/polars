@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from polars.datatypes import DataType
 
 
-@pytest.fixture
+@pytest.fixture()
 def foods_ipc_path() -> Path:
     return Path(__file__).parent.parent / "io" / "files" / "foods1.ipc"
 

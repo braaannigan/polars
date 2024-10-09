@@ -191,7 +191,7 @@ def data_file(
     raise NotImplementedError()
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_scan(
     capfd: Any, monkeypatch: pytest.MonkeyPatch, data_file: _DataFile, force_async: bool
 ) -> None:
@@ -206,7 +206,7 @@ def test_scan(
     assert_frame_equal(df, data_file.df)
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_scan_with_limit(
     capfd: Any, monkeypatch: pytest.MonkeyPatch, data_file: _DataFile, force_async: bool
 ) -> None:
@@ -228,7 +228,7 @@ def test_scan_with_limit(
     )
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_scan_with_filter(
     capfd: Any, monkeypatch: pytest.MonkeyPatch, data_file: _DataFile, force_async: bool
 ) -> None:
@@ -254,7 +254,7 @@ def test_scan_with_filter(
     )
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_scan_with_filter_and_limit(
     capfd: Any, monkeypatch: pytest.MonkeyPatch, data_file: _DataFile, force_async: bool
 ) -> None:
@@ -281,7 +281,7 @@ def test_scan_with_filter_and_limit(
     )
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_scan_with_limit_and_filter(
     capfd: Any, monkeypatch: pytest.MonkeyPatch, data_file: _DataFile, force_async: bool
 ) -> None:
@@ -308,7 +308,7 @@ def test_scan_with_limit_and_filter(
     )
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_scan_with_row_index_and_limit(
     capfd: Any, monkeypatch: pytest.MonkeyPatch, data_file: _DataFile, force_async: bool
 ) -> None:
@@ -336,7 +336,7 @@ def test_scan_with_row_index_and_limit(
     )
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_scan_with_row_index_and_filter(
     capfd: Any, monkeypatch: pytest.MonkeyPatch, data_file: _DataFile, force_async: bool
 ) -> None:
@@ -364,7 +364,7 @@ def test_scan_with_row_index_and_filter(
     )
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_scan_with_row_index_limit_and_filter(
     capfd: Any, monkeypatch: pytest.MonkeyPatch, data_file: _DataFile, force_async: bool
 ) -> None:
@@ -393,7 +393,7 @@ def test_scan_with_row_index_limit_and_filter(
     )
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_scan_with_row_index_projected_out(
     capfd: Any, monkeypatch: pytest.MonkeyPatch, data_file: _DataFile, force_async: bool
 ) -> None:
@@ -416,7 +416,7 @@ def test_scan_with_row_index_projected_out(
     assert_frame_equal(df, data_file.df.select(subset))
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_scan_with_row_index_filter_and_limit(
     capfd: Any, monkeypatch: pytest.MonkeyPatch, data_file: _DataFile, force_async: bool
 ) -> None:
@@ -448,7 +448,7 @@ def test_scan_with_row_index_filter_and_limit(
     )
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 @pytest.mark.parametrize(
     ("scan_func", "write_func"),
     [
@@ -475,7 +475,7 @@ def test_scan_limit_0_does_not_panic(
     assert_frame_equal(scan_func(path).head(0).collect(streaming=streaming), df.clear())
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 @pytest.mark.parametrize(
     ("scan_func", "write_func"),
     [
@@ -527,7 +527,7 @@ def test_scan_directory(
     assert_frame_equal(out, df)
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_scan_glob_excludes_directories(tmp_path: Path) -> None:
     for dir in ["dir1", "dir2", "dir3"]:
         (tmp_path / dir).mkdir()
@@ -547,7 +547,7 @@ def test_scan_glob_excludes_directories(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("file_name", ["a b", "a %25 b"])
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_scan_async_whitespace_in_path(
     tmp_path: Path, monkeypatch: Any, file_name: str
 ) -> None:
@@ -564,7 +564,7 @@ def test_scan_async_whitespace_in_path(
     path.unlink()
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_path_expansion_excludes_empty_files_17362(tmp_path: Path) -> None:
     tmp_path.mkdir(exist_ok=True)
 
@@ -576,7 +576,7 @@ def test_path_expansion_excludes_empty_files_17362(tmp_path: Path) -> None:
     assert_frame_equal(pl.scan_parquet(tmp_path / "*").collect(), df)
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_path_expansion_empty_directory_does_not_panic(tmp_path: Path) -> None:
     tmp_path.mkdir(exist_ok=True)
 
@@ -587,7 +587,7 @@ def test_path_expansion_empty_directory_does_not_panic(tmp_path: Path) -> None:
         pl.scan_parquet(tmp_path / "**/*").collect()
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_scan_single_dir_differing_file_extensions_raises_17436(tmp_path: Path) -> None:
     tmp_path.mkdir(exist_ok=True)
 
@@ -631,7 +631,7 @@ def test_scan_nonexistent_path(format: str) -> None:
         result.collect()
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 @pytest.mark.parametrize(
     ("scan_func", "write_func"),
     [
@@ -694,7 +694,7 @@ def test_scan_include_file_name(
     assert_frame_equal(lf.head(0).collect(streaming=streaming), df.head(0))
 
 
-@pytest.mark.write_disk
+@pytest.mark.write_disk()
 def test_async_path_expansion_bracket_17629(tmp_path: Path) -> None:
     path = tmp_path / "data.parquet"
 

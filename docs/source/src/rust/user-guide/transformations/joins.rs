@@ -239,33 +239,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{}", &df_asof_tolerance_join);
     // --8<-- [end:asof2]
     // --8<-- [start:join_where_df1]
-    let df_customers = df! (
-
-        "car_id" => &[1, 2, 3, 4, 5],
-        "name" => &["Alice", "Bob", "Diana"],
-        "budget_per_day" => &[38.00, 50.00, 55.00],
+    let cars_df = df!(
+        "model" => &["Economy", "Compact", "Midsize", "Fullsize", "Luxury"],
+        "daily_rate" => &[30.00, 35.00, 40.00, 45.00, 60.00],
     )?;
-
-    println!("{}", &df_customers);
+    println!("{}", &cars_df);
     // --8<-- [end:join_where_df1]
+
     // --8<-- [start:join_where_df2]
     let customers_df = df!(
-        "customer_id" => &[101, 102, 104],
         "name" => &["Alice", "Bob", "Diana"],
         "budget_per_day" => &[38.00, 50.00, 55.00],
     )?;
+    println!("{}", &customers_df);
     // --8<-- [end:join_where_df2]
+
     // --8<-- [start:join_where1]
     let cars_in_budget_df = customers_df
-        .join_where(
-            cars_df,
-            col("budget_per_day").ge(col("daily_rate")),
-        )
+        .join_where(&cars_df, col("budget_per_day").gt_eq(col("daily_rate")))
         .collect()?;
     println!("{}", &cars_in_budget_df);
-    // --8<-- [end:join_where1]    
-    
-
-
-    Ok(())
+    // --8<-- [end:join_where1]
 }

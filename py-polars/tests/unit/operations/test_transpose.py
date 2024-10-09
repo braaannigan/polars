@@ -13,7 +13,7 @@ from polars.exceptions import (
 from polars.testing import assert_frame_equal, assert_series_equal
 
 
-@pytest.mark.may_fail_auto_streaming
+@pytest.mark.may_fail_auto_streaming()
 def test_transpose_supertype() -> None:
     df = pl.DataFrame({"a": [1, 2, 3], "b": ["foo", "bar", "ham"]})
     result = df.transpose()
@@ -27,7 +27,7 @@ def test_transpose_supertype() -> None:
     assert_frame_equal(result, expected)
 
 
-@pytest.mark.may_fail_auto_streaming
+@pytest.mark.may_fail_auto_streaming()
 def test_transpose_tz_naive_and_tz_aware() -> None:
     df = pl.DataFrame(
         {
@@ -43,7 +43,7 @@ def test_transpose_tz_naive_and_tz_aware() -> None:
         df.transpose()
 
 
-@pytest.mark.may_fail_auto_streaming
+@pytest.mark.may_fail_auto_streaming()
 def test_transpose_struct() -> None:
     df = pl.DataFrame(
         {
@@ -85,7 +85,7 @@ def test_transpose_struct() -> None:
     assert_frame_equal(result, expected)
 
 
-@pytest.mark.may_fail_auto_streaming
+@pytest.mark.may_fail_auto_streaming()
 def test_transpose_arguments() -> None:
     df = pl.DataFrame({"a": [1, 2, 3], "b": [1, 2, 3]})
     expected = pl.DataFrame(
@@ -140,7 +140,7 @@ def test_transpose_arguments() -> None:
     assert_frame_equal(expected, out)
 
 
-@pytest.mark.may_fail_auto_streaming
+@pytest.mark.may_fail_auto_streaming()
 def test_transpose_categorical_data() -> None:
     with pl.StringCache():
         df = pl.DataFrame(
@@ -179,7 +179,7 @@ def test_transpose_categorical_data() -> None:
         ).transpose()
 
 
-@pytest.mark.may_fail_auto_streaming
+@pytest.mark.may_fail_auto_streaming()
 def test_transpose_logical_data() -> None:
     df = pl.DataFrame(
         {
@@ -198,7 +198,7 @@ def test_transpose_logical_data() -> None:
     assert_frame_equal(result, expected)
 
 
-@pytest.mark.may_fail_auto_streaming
+@pytest.mark.may_fail_auto_streaming()
 def test_err_transpose_object() -> None:
     class CustomObject:
         pass
@@ -207,14 +207,14 @@ def test_err_transpose_object() -> None:
         pl.DataFrame([CustomObject()]).transpose()
 
 
-@pytest.mark.may_fail_auto_streaming
+@pytest.mark.may_fail_auto_streaming()
 def test_transpose_name_from_column_13777() -> None:
     csv_file = io.BytesIO(b"id,kc\nhi,3")
     df = pl.read_csv(csv_file).transpose(column_names="id")
     assert_series_equal(df.to_series(0), pl.Series("hi", [3]))
 
 
-@pytest.mark.may_fail_auto_streaming
+@pytest.mark.may_fail_auto_streaming()
 def test_transpose_multiple_chunks() -> None:
     df = pl.DataFrame({"a": ["1"]})
     expected = pl.DataFrame({"column_0": ["1"], "column_1": ["1"]})

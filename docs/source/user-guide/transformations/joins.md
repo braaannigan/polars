@@ -1,9 +1,11 @@
 # Joins
 
 Polars supports both equality and non-equality joins. Equality joins are the most common type of join and are used to
-combine two `DataFrames` based on a common column or columns. Non-equality joins are used to combine two `DataFrames` based on a
+combine two `DataFrames` based on equal values in one or more columns. Non-equality joins are used to combine two `DataFrames` based on a
 condition that is not an equality condition such as a nearest key match.
+
 ## Equality joins
+
 ### Join strategies overview
 
 Polars supports the following equality join strategies by specifying the `how` argument to `join`:
@@ -18,8 +20,7 @@ Polars supports the following equality join strategies by specifying the `how` a
 | `semi`   | Returns all rows from the left frame in which the join key is also present in the right frame.                                                                                                             |
 | `anti`   | Returns all rows from the left frame in which the join key is _not_ present in the right frame.                                                                                                            |
 
-A separate `coalesce` parameter determines whether to merge key columns with the same name from the left and right
-frames.
+A separate `coalesce` parameter determines whether to merge join columns with the same name from the left and right frames.
 
 ### Inner join
 
@@ -130,7 +131,6 @@ We can now create a `DataFrame` containing all possible combinations of the colo
 
 <br>
 
-
 ### Semi join
 
 The `semi` join returns all rows from the left frame in which the join key is also present in the right frame. Consider
@@ -231,12 +231,14 @@ trade so we set `tolerance = "1m"`.
 ```python exec="on" result="text" session="user-guide/transformations/joins"
 --8<-- "python/user-guide/transformations/joins.py:asof2"
 ```
+
 ### Inequality join
-We can use `join_where` to perform an inequality join where we join rows based on a condition. For this example we 
-take an example of a car rental company finding cars that fit within the budgets of its customers. 
+
+We can use `join_where` to perform an inequality join where we join rows based on a condition. For this example we
+take an example of a car rental company finding cars that fit within the budgets of its customers.
 
 The car rental company has one `DataFrame` showing their cars along with the daily
-rate they charge for each car. 
+rate they charge for each car.
 {{code_block('user-guide/transformations/joins','join_where_df1',['DataFrame'])}}
 
 ```python exec="on" result="text" session="user-guide/transformations/joins"
@@ -251,8 +253,11 @@ willing to pay for a car.
 ```python exec="on" result="text" session="user-guide/transformations/joins"
 --8<-- "python/user-guide/transformations/joins.py:join_where_df2"
 ```
+
 We can now create a `DataFrame` containing all cars that fit within the budget of each customer with a `join_where` join:
 
 {{code_block('user-guide/transformations/joins','join_where1',['join_where'])}}
 
 ```python exec="on" result="text" session="user-guide/transformations/joins"
+--8<-- "python/user-guide/transformations/joins.py:join_where1"
+```
