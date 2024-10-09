@@ -47,6 +47,7 @@ pub struct ParquetSourceNode {
     config: Config,
     verbose: bool,
     physical_predicate: Option<Arc<dyn PhysicalIoExpr>>,
+    schema: Option<Arc<ArrowSchema>>,
     projected_arrow_schema: Option<Arc<ArrowSchema>>,
     byte_source_builder: DynByteSourceBuilder,
     memory_prefetch_func: fn(&[u8]) -> (),
@@ -112,6 +113,7 @@ impl ParquetSourceNode {
             },
             verbose,
             physical_predicate: None,
+            schema: None,
             projected_arrow_schema: None,
             byte_source_builder,
             memory_prefetch_func,
@@ -153,6 +155,8 @@ impl ComputeNode for ParquetSourceNode {
         if self.verbose {
             eprintln!("[ParquetSource]: {:?}", &self.config);
         }
+
+        self.schema = Some(self.file_info.reader_schema.take().unwrap().unwrap_left());
 
         self.init_projected_arrow_schema();
         self.physical_predicate = self.predicate.clone().map(phys_expr_to_io_expr);

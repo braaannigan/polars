@@ -145,6 +145,12 @@ impl LazyFrame {
         self
     }
 
+    /// Toggle collapse joins optimization.
+    pub fn with_collapse_joins(mut self, toggle: bool) -> Self {
+        self.opt_state.set(OptFlags::COLLAPSE_JOINS, toggle);
+        self
+    }
+
     /// Toggle predicate pushdown optimization.
     pub fn with_predicate_pushdown(mut self, toggle: bool) -> Self {
         self.opt_state.set(OptFlags::PREDICATE_PUSHDOWN, toggle);
@@ -246,7 +252,7 @@ impl LazyFrame {
 
     /// Return a String describing the logical plan.
     ///
-    /// If `optimized` is `true`, explains the optimized plan. If `optimized` is `false,
+    /// If `optimized` is `true`, explains the optimized plan. If `optimized` is `false`,
     /// explains the naive, un-optimized plan.
     pub fn explain(&self, optimized: bool) -> PolarsResult<String> {
         if optimized {
@@ -386,9 +392,10 @@ impl LazyFrame {
     ///
     /// `existing` and `new` are iterables of the same length containing the old and
     /// corresponding new column names. Renaming happens to all `existing` columns
-    /// simultaneously, not iteratively. (In particular, all columns in `existing` must
-    /// already exist in the `LazyFrame` when `rename` is called.)
-    pub fn rename<I, J, T, S>(self, existing: I, new: J) -> Self
+    /// simultaneously, not iteratively. If `strict` is true, all columns in `existing`
+    /// must be present in the `LazyFrame` when `rename` is called; otherwise, only
+    /// those columns that are actually found will be renamed (others will be ignored).
+    pub fn rename<I, J, T, S>(self, existing: I, new: J, strict: bool) -> Self
     where
         I: IntoIterator<Item = T>,
         J: IntoIterator<Item = S>,
@@ -414,6 +421,7 @@ impl LazyFrame {
         self.map_private(DslFunction::Rename {
             existing: existing_vec.into(),
             new: new_vec.into(),
+            strict,
         })
     }
 
@@ -1756,31 +1764,42 @@ impl LazyFrame {
     /// # Warning
     /// This can have a negative effect on query performance. This may for instance block
     /// predicate pushdown optimization.
-    pub fn with_row_index<S>(mut self, name: S, offset: Option<IdxSize>) -> LazyFrame
+    pub fn with_row_index<S>(self, name: S, offset: Option<IdxSize>) -> LazyFrame
     where
         S: Into<PlSmallStr>,
     {
         let name = name.into();
-        let add_row_index_in_map = match &mut self.logical_plan {
-            DslPlan::Scan {
-                file_options: options,
-                scan_type,
-                ..
-            } if !matches!(scan_type, FileScan::Anonymous { .. }) => {
-                let name = name.clone();
-                options.row_index = Some(RowIndex {
+
+        match &self.logical_plan {
+            v @ DslPlan::Scan { scan_type, .. }
+                if !matches!(scan_type, FileScan::Anonymous { .. }) =>
+            {
+                let DslPlan::Scan {
+                    sources,
+                    mut file_options,
+                    scan_type,
+                    file_info,
+                    cached_ir: _,
+                } = v.clone()
+                else {
+                    unreachable!()
+                };
+
+                file_options.row_index = Some(RowIndex {
                     name,
                     offset: offset.unwrap_or(0),
                 });
-                false
-            },
-            _ => true,
-        };
 
-        if add_row_index_in_map {
-            self.map_private(DslFunction::RowIndex { name, offset })
-        } else {
-            self
+                DslPlan::Scan {
+                    sources,
+                    file_options,
+                    scan_type,
+                    file_info,
+                    cached_ir: Default::default(),
+                }
+                .into()
+            },
+            _ => self.map_private(DslFunction::RowIndex { name, offset }),
         }
     }
 
@@ -2074,7 +2093,7 @@ impl JoinBuilder {
     /// Finish builder
     pub fn finish(self) -> LazyFrame {
         let mut opt_state = self.lf.opt_state;
-        let other = self.other.expect("with not set");
+        let other = self.other.expect("'with' not set in join builder");
 
         // If any of the nodes reads from files we must activate this plan as well.
         if other.opt_state.contains(OptFlags::FILE_CACHING) {

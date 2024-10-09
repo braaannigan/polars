@@ -49,15 +49,18 @@ impl PyDataFrame {
                 (0..df.height()).map(|idx| {
                     PyTuple::new_bound(
                         py,
-                        self.df.get_columns().iter().map(|s| match s.dtype() {
+                        self.df.get_columns().iter().map(|c| match c.dtype() {
                             DataType::Null => py.None(),
                             DataType::Object(_, _) => {
                                 let obj: Option<&ObjectValue> =
-                                    s.get_object(idx).map(|any| any.into());
+                                    c.get_object(idx).map(|any| any.into());
                                 obj.to_object(py)
                             },
-                            // SAFETY: we are in bounds.
-                            _ => unsafe { Wrap(s.get_unchecked(idx)).into_py(py) },
+                            _ => {
+                                // SAFETY: we are in bounds.
+                                let av = unsafe { c.get_unchecked(idx) };
+                                Wrap(av).into_py(py)
+                            },
                         }),
                     )
                 }),
@@ -68,7 +71,7 @@ impl PyDataFrame {
 
     #[allow(clippy::wrong_self_convention)]
     pub fn to_arrow(&mut self, compat_level: PyCompatLevel) -> PyResult<Vec<PyObject>> {
-        self.df.align_chunks();
+        self.df.align_chunks_par();
         Python::with_gil(|py| {
             let pyarrow = py.import_bound("pyarrow")?;
             let names = self.df.get_column_names_str();
@@ -141,7 +144,7 @@ impl PyDataFrame {
         py: Python<'py>,
         requested_schema: Option<PyObject>,
     ) -> PyResult<Bound<'py, PyCapsule>> {
-        self.df.align_chunks();
+        self.df.align_chunks_par();
         dataframe_to_stream(&self.df, py)
     }
 }

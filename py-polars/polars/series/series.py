@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import math
 import os
+from collections.abc import Iterable, Sequence
 from contextlib import nullcontext
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal as PyDecimal
@@ -11,13 +12,8 @@ from typing import (
     Any,
     Callable,
     ClassVar,
-    Collection,
-    Generator,
-    Iterable,
     Literal,
-    Mapping,
     NoReturn,
-    Sequence,
     Union,
     overload,
 )
@@ -114,6 +110,7 @@ with contextlib.suppress(ImportError):  # Module not available when building doc
 
 if TYPE_CHECKING:
     import sys
+    from collections.abc import Collection, Generator, Mapping
 
     import jax
     import numpy.typing as npt
@@ -872,7 +869,7 @@ class Series:
         """
         Method equivalent of equality operator `series == other` where `None == None`.
 
-        This differs from the standard `ne` where null values are propagated.
+        This differs from the standard `eq` where null values are propagated.
 
         Parameters
         ----------
@@ -1058,6 +1055,22 @@ class Series:
             return F.lit(self) - other
         return self._arithmetic(other, "sub", "sub_<>")
 
+    def _recursive_cast_to_dtype(self, leaf_dtype: PolarsDataType) -> Series:
+        """
+        Convert leaf dtype the to given primitive datatype.
+
+        This is equivalent to logic in DataType::cast_leaf() in Rust.
+        """
+
+        def convert_to_primitive(dtype: PolarsDataType) -> PolarsDataType:
+            if isinstance(dtype, Array):
+                return Array(convert_to_primitive(dtype.inner), shape=dtype.shape)
+            if isinstance(dtype, List):
+                return List(convert_to_primitive(dtype.inner))
+            return leaf_dtype
+
+        return self.cast(convert_to_primitive(self.dtype))
+
     @overload
     def __truediv__(self, other: Expr) -> Expr: ...
 
@@ -1073,9 +1086,11 @@ class Series:
 
         # this branch is exactly the floordiv function without rounding the floats
         if self.dtype.is_float() or self.dtype == Decimal:
-            return self._arithmetic(other, "div", "div_<>")
+            as_float = self
+        else:
+            as_float = self._recursive_cast_to_dtype(Float64())
 
-        return self.cast(Float64) / other
+        return as_float._arithmetic(other, "div", "div_<>")
 
     @overload
     def __floordiv__(self, other: Expr) -> Expr: ...
@@ -1210,7 +1225,7 @@ class Series:
             return self.has_nulls()
         return self.implode().list.contains(item).item()
 
-    def __iter__(self) -> Generator[Any, None, None]:
+    def __iter__(self) -> Generator[Any]:
         if self.dtype in (List, Array):
             # TODO: either make a change and return py-native list data here, or find
             #  a faster way to return nested/List series; sequential 'get_index' calls
@@ -3680,7 +3695,7 @@ class Series:
 
     def is_nan(self) -> Series:
         """
-        Returns a boolean Series indicating which values are not NaN.
+        Returns a boolean Series indicating which values are NaN.
 
         Returns
         -------
@@ -7348,6 +7363,60 @@ class Series:
             [1, 2, 3]
         ]
         """
+
+    def bitwise_count_ones(self) -> Self:
+        """Evaluate the number of set bits."""
+
+    def bitwise_count_zeros(self) -> Self:
+        """Evaluate the number of unset Self."""
+
+    def bitwise_leading_ones(self) -> Self:
+        """Evaluate the number most-significant set bits before seeing an unset bit."""
+
+    def bitwise_leading_zeros(self) -> Self:
+        """Evaluate the number most-significant unset bits before seeing a set bit."""
+
+    def bitwise_trailing_ones(self) -> Self:
+        """Evaluate the number least-significant set bits before seeing an unset bit."""
+
+    def bitwise_trailing_zeros(self) -> Self:
+        """Evaluate the number least-significant unset bits before seeing a set bit."""
+
+    def bitwise_and(self) -> PythonLiteral | None:
+        """Perform an aggregation of bitwise ANDs."""
+        return self._s.bitwise_and()
+
+    def bitwise_or(self) -> PythonLiteral | None:
+        """Perform an aggregation of bitwise ORs."""
+        return self._s.bitwise_or()
+
+    def bitwise_xor(self) -> PythonLiteral | None:
+        """Perform an aggregation of bitwise XORs."""
+        return self._s.bitwise_xor()
+
+    def first(self) -> PythonLiteral | None:
+        """
+        Get the first element of the Series.
+
+        Returns `None` if the Series is empty.
+        """
+        return self._s.first()
+
+    def last(self) -> PythonLiteral | None:
+        """
+        Get the last element of the Series.
+
+        Returns `None` if the Series is empty.
+        """
+        return self._s.last()
+
+    def approx_n_unique(self) -> PythonLiteral | None:
+        """
+        Approximate count of unique values.
+
+        This is done using the HyperLogLog++ algorithm for cardinality estimation.
+        """
+        return self._s.approx_n_unique()
 
     # Keep the `list` and `str` properties below at the end of the definition of Series,
     # as to not confuse mypy with the type annotation `str` and `list`

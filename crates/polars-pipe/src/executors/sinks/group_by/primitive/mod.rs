@@ -277,7 +277,7 @@ where
         let s = s.to_physical_repr();
         let s = prepare_key(&s, chunk);
 
-        // todo! ammortize allocation
+        // TODO: Amortize allocation.
         for phys_e in self.aggregation_columns.iter() {
             let s = phys_e.evaluate(chunk, &context.execution_state)?;
             let s = s.to_physical_repr();
@@ -458,10 +458,11 @@ where
     fn finalize(&mut self, _context: &PExecutionContext) -> PolarsResult<FinalizedSink> {
         let dfs = self.pre_finalize()?;
         let payload = if self.ooc_state.ooc {
-            let mut iot = self.ooc_state.io_thread.lock().unwrap();
-            // make sure that we reset the shared states
-            // the OOC group_by will call split as well and it should
-            // not send continue spilling to disk
+            let mut guard = self.ooc_state.io_thread.lock().unwrap();
+            // Type hint fixes rust-analyzer thinking .take() is an iterator method.
+            let iot: &mut Option<_> = &mut *guard;
+            // Make sure that we reset the shared states. The OOC group_by will
+            // call split as well and it should not send continue spilling to disk.
             let iot = iot.take().unwrap();
             self.ooc_state.ooc = false;
 
@@ -500,7 +501,7 @@ fn insert_and_get<T>(
     h: u64,
     opt_v: Option<T>,
     pre_agg_len: usize,
-    pre_agg_partitions: &mut Vec<PlIdHashMap<Key<Option<T>>, IdxSize>>,
+    pre_agg_partitions: &mut [PlIdHashMap<Key<Option<T>>, IdxSize>],
     current_aggregators: &mut Vec<AggregateFunction>,
     agg_fns: &Vec<AggregateFunction>,
 ) -> IdxSize
@@ -536,7 +537,7 @@ fn try_insert_and_get<T>(
     h: u64,
     opt_v: Option<T>,
     pre_agg_len: usize,
-    pre_agg_partitions: &mut Vec<PlIdHashMap<Key<Option<T>>, IdxSize>>,
+    pre_agg_partitions: &mut [PlIdHashMap<Key<Option<T>>, IdxSize>],
 ) -> Option<IdxSize>
 where
     T: NumericNative + Hash,

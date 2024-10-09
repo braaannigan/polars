@@ -337,12 +337,13 @@ where
     T: PolarsNumericType,
 {
     let ca: &ChunkedArray<T> = s.as_ref().as_ref();
+    let ca = ca.rechunk();
     let arr = ca.downcast_iter().next().unwrap();
     arr.values().clone()
 }
 fn series_to_bitmap(s: Series) -> PyResult<Bitmap> {
     let ca_result = s.bool();
-    let ca = ca_result.map_err(PyPolarsErr::from)?;
+    let ca = ca_result.map_err(PyPolarsErr::from)?.rechunk();
     let arr = ca.downcast_iter().next().unwrap();
     let bitmap = arr.values().clone();
     Ok(bitmap)

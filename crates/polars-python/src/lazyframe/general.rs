@@ -148,9 +148,27 @@ impl PyLazyFrame {
         include_file_paths: Option<String>,
     ) -> PyResult<Self> {
         let null_values = null_values.map(|w| w.0);
-        let quote_char = quote_char.map(|s| s.as_bytes()[0]);
-        let separator = separator.as_bytes()[0];
-        let eol_char = eol_char.as_bytes()[0];
+        let quote_char = quote_char
+            .map(|s| {
+                s.as_bytes()
+                    .first()
+                    .ok_or_else(|| polars_err!(InvalidOperation: "`quote_char` cannot be empty"))
+            })
+            .transpose()
+            .map_err(PyPolarsErr::from)?
+            .copied();
+        let separator = separator
+            .as_bytes()
+            .first()
+            .ok_or_else(|| polars_err!(InvalidOperation: "`separator` cannot be empty"))
+            .copied()
+            .map_err(PyPolarsErr::from)?;
+        let eol_char = eol_char
+            .as_bytes()
+            .first()
+            .ok_or_else(|| polars_err!(InvalidOperation: "`eol_char` cannot be empty"))
+            .copied()
+            .map_err(PyPolarsErr::from)?;
         let row_index = row_index.map(|(name, offset)| RowIndex {
             name: name.into(),
             offset,
@@ -240,7 +258,7 @@ impl PyLazyFrame {
     #[cfg(feature = "parquet")]
     #[staticmethod]
     #[pyo3(signature = (source, sources, n_rows, cache, parallel, rechunk, row_index,
-        low_memory, cloud_options, use_statistics, hive_partitioning, hive_schema, try_parse_hive_dates, retries, glob, include_file_paths)
+        low_memory, cloud_options, use_statistics, hive_partitioning, schema, hive_schema, try_parse_hive_dates, retries, glob, include_file_paths, allow_missing_columns)
     )]
     fn new_from_parquet(
         source: Option<PyObject>,
@@ -254,11 +272,13 @@ impl PyLazyFrame {
         cloud_options: Option<Vec<(String, String)>>,
         use_statistics: bool,
         hive_partitioning: Option<bool>,
+        schema: Option<Wrap<Schema>>,
         hive_schema: Option<Wrap<Schema>>,
         try_parse_hive_dates: bool,
         retries: usize,
         glob: bool,
         include_file_paths: Option<String>,
+        allow_missing_columns: bool,
     ) -> PyResult<Self> {
         let parallel = parallel.0;
         let hive_schema = hive_schema.map(|s| Arc::new(s.0));
@@ -284,9 +304,11 @@ impl PyLazyFrame {
             low_memory,
             cloud_options: None,
             use_statistics,
+            schema: schema.map(|x| Arc::new(x.0)),
             hive_options,
             glob,
             include_file_paths: include_file_paths.map(|x| x.into()),
+            allow_missing_columns,
         };
 
         let sources = sources.0;
@@ -438,6 +460,7 @@ impl PyLazyFrame {
         comm_subplan_elim: bool,
         comm_subexpr_elim: bool,
         cluster_with_columns: bool,
+        collapse_joins: bool,
         streaming: bool,
         _eager: bool,
         #[allow(unused_variables)] new_streaming: bool,
@@ -449,6 +472,7 @@ impl PyLazyFrame {
             .with_simplify_expr(simplify_expression)
             .with_slice_pushdown(slice_pushdown)
             .with_cluster_with_columns(cluster_with_columns)
+            .with_collapse_joins(collapse_joins)
             ._with_eager(_eager)
             .with_projection_pushdown(projection_pushdown);
 
@@ -881,7 +905,7 @@ impl PyLazyFrame {
                 strategy: strategy.0,
                 left_by: left_by.map(strings_to_pl_smallstr),
                 right_by: right_by.map(strings_to_pl_smallstr),
-                tolerance: tolerance.map(|t| t.0.into_static().unwrap()),
+                tolerance: tolerance.map(|t| t.0.into_static()),
                 tolerance_str: tolerance_str.map(|s| s.into()),
             }))
             .suffix(suffix)
@@ -958,9 +982,9 @@ impl PyLazyFrame {
         ldf.with_columns_seq(exprs.to_exprs()).into()
     }
 
-    fn rename(&mut self, existing: Vec<String>, new: Vec<String>) -> Self {
+    fn rename(&mut self, existing: Vec<String>, new: Vec<String>, strict: bool) -> Self {
         let ldf = self.ldf.clone();
-        ldf.rename(existing, new).into()
+        ldf.rename(existing, new, strict).into()
     }
 
     fn reverse(&self) -> Self {

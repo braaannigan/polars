@@ -217,6 +217,13 @@ impl AExpr {
                         float_type(&mut field);
                         Ok(field)
                     },
+                    #[cfg(feature = "bitwise")]
+                    Bitwise(expr, _) => {
+                        *nested = nested.saturating_sub(1);
+                        let field = arena.get(*expr).to_field_impl(schema, arena, nested)?;
+                        // @Q? Do we need to coerce here?
+                        Ok(field)
+                    },
                 }
             },
             Cast { expr, dtype, .. } => {
@@ -253,14 +260,11 @@ impl AExpr {
             AnonymousFunction {
                 output_type,
                 input,
-                function,
                 options,
                 ..
             } => {
                 *nested = nested
                     .saturating_sub(options.flags.contains(FunctionFlags::RETURNS_SCALAR) as _);
-                let tmp = function.get_output();
-                let output_type = tmp.as_ref().unwrap_or(output_type);
                 let fields = func_args_to_fields(input, schema, arena, nested)?;
                 polars_ensure!(!fields.is_empty(), ComputeError: "expression: '{}' didn't get any inputs", options.fmt_str);
                 output_type.get_field(schema, Context::Default, &fields)
@@ -287,10 +291,20 @@ fn func_args_to_fields(
     arena: &Arena<AExpr>,
     nested: &mut u8,
 ) -> PolarsResult<Vec<Field>> {
+    let mut first = true;
     input
         .iter()
         // Default context because `col()` would return a list in aggregation context
         .map(|e| {
+            // Only mutate first nested as that is the dtype of the function.
+            let mut nested_tmp = *nested;
+            let nested = if first {
+                first = false;
+                &mut *nested
+            } else {
+                &mut nested_tmp
+            };
+
             arena
                 .get(e.node())
                 .to_field_impl(schema, arena, nested)

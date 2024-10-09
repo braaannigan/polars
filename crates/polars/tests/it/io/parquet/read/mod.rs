@@ -34,7 +34,7 @@ pub fn hybrid_rle_iter(d: HybridRleDecoder) -> ParquetResult<std::vec::IntoIter<
 
 pub fn get_path() -> PathBuf {
     let dir = env!("CARGO_MANIFEST_DIR");
-    PathBuf::from(dir).join("../../docs/data")
+    PathBuf::from(dir).join("../../docs/assets/data")
 }
 
 /// Reads a page into an [`Array`].
@@ -205,6 +205,7 @@ pub fn read_column(
 
     let mut statistics = metadata.row_groups[row_group]
         .columns_under_root_iter(field.name())
+        .unwrap()
         .map(|column_meta| column_meta.statistics().transpose())
         .collect::<ParquetResult<Vec<_>>>()?;
 

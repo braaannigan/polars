@@ -309,7 +309,7 @@ pub fn split_df(df: &mut DataFrame, target: usize, strict: bool) -> Vec<DataFram
         return vec![df.clone()];
     }
     // make sure that chunks are aligned.
-    df.align_chunks();
+    df.align_chunks_par();
     split_df_as_ref(df, target, strict)
 }
 
@@ -392,7 +392,7 @@ macro_rules! match_dtype_to_logical_apply_macro {
     }};
 }
 
-/// Apply a macro on the Downcasted ChunkedArray's
+/// Apply a macro on the Downcasted ChunkedArrays
 #[macro_export]
 macro_rules! match_arrow_dtype_apply_macro_ca {
     ($self:expr, $macro:ident, $macro_string:ident, $macro_bool:ident $(, $opt_args:expr)*) => {{
@@ -521,15 +521,15 @@ macro_rules! with_match_physical_integer_polars_type {(
     use $crate::datatypes::DataType::*;
     use $crate::datatypes::*;
     match $key_type {
-            #[cfg(feature = "dtype-i8")]
+        #[cfg(feature = "dtype-i8")]
         Int8 => __with_ty__! { Int8Type },
-            #[cfg(feature = "dtype-i16")]
+        #[cfg(feature = "dtype-i16")]
         Int16 => __with_ty__! { Int16Type },
         Int32 => __with_ty__! { Int32Type },
         Int64 => __with_ty__! { Int64Type },
-            #[cfg(feature = "dtype-u8")]
+        #[cfg(feature = "dtype-u8")]
         UInt8 => __with_ty__! { UInt8Type },
-            #[cfg(feature = "dtype-u16")]
+        #[cfg(feature = "dtype-u16")]
         UInt16 => __with_ty__! { UInt16Type },
         UInt32 => __with_ty__! { UInt32Type },
         UInt64 => __with_ty__! { UInt64Type },
@@ -537,7 +537,7 @@ macro_rules! with_match_physical_integer_polars_type {(
     }
 })}
 
-/// Apply a macro on the Downcasted ChunkedArray's of DataTypes that are logical numerics.
+/// Apply a macro on the Downcasted ChunkedArrays of DataTypes that are logical numerics.
 /// So no logical.
 #[macro_export]
 macro_rules! downcast_as_macro_arg_physical {
@@ -562,7 +562,7 @@ macro_rules! downcast_as_macro_arg_physical {
     }};
 }
 
-/// Apply a macro on the Downcasted ChunkedArray's of DataTypes that are logical numerics.
+/// Apply a macro on the Downcasted ChunkedArrays of DataTypes that are logical numerics.
 /// So no logical.
 #[macro_export]
 macro_rules! downcast_as_macro_arg_physical_mut {

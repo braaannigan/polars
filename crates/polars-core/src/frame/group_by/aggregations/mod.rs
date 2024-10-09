@@ -65,7 +65,7 @@ pub fn _rolling_apply_agg_window_nulls<'a, Agg, T, O>(
     values: &'a [T],
     validity: &'a Bitmap,
     offsets: O,
-    params: DynArgs,
+    params: Option<RollingFnParams>,
 ) -> PrimitiveArray<T>
 where
     O: Iterator<Item = (IdxSize, IdxSize)> + TrustedLen,
@@ -120,7 +120,7 @@ where
 pub fn _rolling_apply_agg_window_no_nulls<'a, Agg, T, O>(
     values: &'a [T],
     offsets: O,
-    params: DynArgs,
+    params: Option<RollingFnParams>,
 ) -> PrimitiveArray<T>
 where
     // items (offset, len) -> so offsets are offset, offset + len
@@ -388,7 +388,7 @@ where
                     None => _rolling_apply_agg_window_no_nulls::<QuantileWindow<_>, _, _>(
                         values,
                         offset_iter,
-                        Some(Arc::new(RollingQuantileParams {
+                        Some(RollingFnParams::Quantile(RollingQuantileParams {
                             prob: quantile,
                             interpol,
                         })),
@@ -398,7 +398,7 @@ where
                             values,
                             validity,
                             offset_iter,
-                            Some(Arc::new(RollingQuantileParams {
+                            Some(RollingFnParams::Quantile(RollingQuantileParams {
                                 prob: quantile,
                                 interpol,
                             })),
@@ -452,6 +452,77 @@ where
         GroupsProxy::Slice { .. } => {
             agg_quantile_generic::<T, K>(ca, groups, 0.5, QuantileInterpolOptions::Linear)
         },
+    }
+}
+
+/// # Safety
+///
+/// No bounds checks on `groups`.
+#[cfg(feature = "bitwise")]
+unsafe fn bitwise_agg<T: PolarsNumericType>(
+    ca: &ChunkedArray<T>,
+    groups: &GroupsProxy,
+    f: fn(&ChunkedArray<T>) -> Option<T::Native>,
+) -> Series
+where
+    ChunkedArray<T>:
+        ChunkTakeUnchecked<[IdxSize]> + ChunkBitwiseReduce<Physical = T::Native> + IntoSeries,
+{
+    // Prevent a rechunk for every individual group.
+    let s = if groups.len() > 1 {
+        ca.rechunk()
+    } else {
+        ca.clone()
+    };
+
+    match groups {
+        GroupsProxy::Idx(groups) => agg_helper_idx_on_all::<T, _>(groups, |idx| {
+            debug_assert!(idx.len() <= s.len());
+            if idx.is_empty() {
+                None
+            } else {
+                let take = unsafe { s.take_unchecked(idx) };
+                f(&take)
+            }
+        }),
+        GroupsProxy::Slice { groups, .. } => _agg_helper_slice::<T, _>(groups, |[first, len]| {
+            debug_assert!(len <= s.len() as IdxSize);
+            if len == 0 {
+                None
+            } else {
+                let take = _slice_from_offsets(&s, first, len);
+                f(&take)
+            }
+        }),
+    }
+}
+
+#[cfg(feature = "bitwise")]
+impl<T> ChunkedArray<T>
+where
+    T: PolarsNumericType,
+    ChunkedArray<T>:
+        ChunkTakeUnchecked<[IdxSize]> + ChunkBitwiseReduce<Physical = T::Native> + IntoSeries,
+{
+    /// # Safety
+    ///
+    /// No bounds checks on `groups`.
+    pub(crate) unsafe fn agg_and(&self, groups: &GroupsProxy) -> Series {
+        unsafe { bitwise_agg(self, groups, ChunkBitwiseReduce::and_reduce) }
+    }
+
+    /// # Safety
+    ///
+    /// No bounds checks on `groups`.
+    pub(crate) unsafe fn agg_or(&self, groups: &GroupsProxy) -> Series {
+        unsafe { bitwise_agg(self, groups, ChunkBitwiseReduce::or_reduce) }
+    }
+
+    /// # Safety
+    ///
+    /// No bounds checks on `groups`.
+    pub(crate) unsafe fn agg_xor(&self, groups: &GroupsProxy) -> Series {
+        unsafe { bitwise_agg(self, groups, ChunkBitwiseReduce::xor_reduce) }
     }
 }
 
@@ -797,14 +868,14 @@ where
                         None => _rolling_apply_agg_window_no_nulls::<VarWindow<_>, _, _>(
                             values,
                             offset_iter,
-                            Some(Arc::new(RollingVarParams { ddof })),
+                            Some(RollingFnParams::Var(RollingVarParams { ddof })),
                         ),
                         Some(validity) => {
                             _rolling_apply_agg_window_nulls::<rolling::nulls::VarWindow<_>, _, _>(
                                 values,
                                 validity,
                                 offset_iter,
-                                Some(Arc::new(RollingVarParams { ddof })),
+                                Some(RollingFnParams::Var(RollingVarParams { ddof })),
                             )
                         },
                     };
@@ -862,14 +933,14 @@ where
                         None => _rolling_apply_agg_window_no_nulls::<VarWindow<_>, _, _>(
                             values,
                             offset_iter,
-                            Some(Arc::new(RollingVarParams { ddof })),
+                            Some(RollingFnParams::Var(RollingVarParams { ddof })),
                         ),
                         Some(validity) => {
                             _rolling_apply_agg_window_nulls::<rolling::nulls::VarWindow<_>, _, _>(
                                 values,
                                 validity,
                                 offset_iter,
-                                Some(Arc::new(RollingVarParams { ddof })),
+                                Some(RollingFnParams::Var(RollingVarParams { ddof })),
                             )
                         },
                     };

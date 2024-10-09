@@ -2064,8 +2064,13 @@ def test_read_csv_single_column(columns: list[str] | str) -> None:
 
 
 def test_csv_invalid_escape_utf8_14960() -> None:
-    with pytest.raises(ComputeError, match=r"field is not properly escaped"):
+    with pytest.raises(ComputeError, match=r"Field .* is not properly escaped"):
         pl.read_csv('col1\n""•'.encode())
+
+
+def test_csv_invalid_escape() -> None:
+    with pytest.raises(ComputeError):
+        pl.read_csv(b'col1,col2\n"a,b')
 
 
 @pytest.mark.slow
@@ -2261,6 +2266,17 @@ def test_write_csv_appending_17543(tmp_path: Path) -> None:
     with (tmp_path / "append.csv").open("r") as f:
         assert f.readline() == "# test\n"
         assert pl.read_csv(f).equals(df)
+
+
+def test_write_csv_passing_params_18825() -> None:
+    df = pl.DataFrame({"c1": [1, 2], "c2": [3, 4]})
+    buffer = io.StringIO()
+    df.write_csv(buffer, separator="\t", include_header=False)
+
+    result_str = buffer.getvalue()
+    expected_str = "1\t3\n2\t4\n"
+
+    assert result_str == expected_str
 
 
 @pytest.mark.parametrize(

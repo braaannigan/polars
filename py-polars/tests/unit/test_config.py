@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Iterator
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -10,6 +10,9 @@ import polars as pl
 import polars.polars as plr
 from polars._utils.unstable import issue_unstable_warning
 from polars.config import _POLARS_CFG_ENV_VARS
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 @pytest.fixture(autouse=True)
@@ -736,7 +739,7 @@ def test_config_scope() -> None:
 
 
 def test_config_raise_error_if_not_exist() -> None:
-    with pytest.raises(AttributeError), pl.Config(i_do_not_exist=True):
+    with pytest.raises(AttributeError), pl.Config(i_do_not_exist=True):  # type: ignore[call-arg]
         pass
 
 

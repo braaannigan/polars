@@ -3,9 +3,6 @@
 #[cfg(feature = "dtype-categorical")]
 pub mod cat;
 
-#[cfg(any(feature = "rolling_window", feature = "rolling_window_by"))]
-use std::any::Any;
-
 #[cfg(feature = "dtype-categorical")]
 pub use cat::*;
 #[cfg(feature = "rolling_window_by")]
@@ -16,6 +13,8 @@ mod arity;
 #[cfg(feature = "dtype-array")]
 mod array;
 pub mod binary;
+#[cfg(feature = "bitwise")]
+mod bitwise;
 #[cfg(feature = "temporal")]
 pub mod dt;
 mod expr;
@@ -549,7 +548,7 @@ impl Expr {
 
         Expr::AnonymousFunction {
             input: vec![self],
-            function: SpecialEq::new(Arc::new(f)),
+            function: new_column_udf(f),
             output_type,
             options: FunctionOptions {
                 collect_groups: ApplyOptions::ElementWise,
@@ -583,7 +582,7 @@ impl Expr {
 
         Expr::AnonymousFunction {
             input,
-            function: SpecialEq::new(Arc::new(function)),
+            function: new_column_udf(function),
             output_type,
             options: FunctionOptions {
                 collect_groups: ApplyOptions::ElementWise,
@@ -608,7 +607,7 @@ impl Expr {
 
         Expr::AnonymousFunction {
             input: vec![self],
-            function: SpecialEq::new(Arc::new(f)),
+            function: new_column_udf(f),
             output_type,
             options: FunctionOptions {
                 collect_groups: ApplyOptions::ApplyList,
@@ -632,7 +631,7 @@ impl Expr {
 
         Expr::AnonymousFunction {
             input: vec![self],
-            function: SpecialEq::new(Arc::new(f)),
+            function: new_column_udf(f),
             output_type,
             options,
         }
@@ -655,7 +654,7 @@ impl Expr {
 
         Expr::AnonymousFunction {
             input: vec![self],
-            function: SpecialEq::new(Arc::new(f)),
+            function: new_column_udf(f),
             output_type,
             options: FunctionOptions {
                 collect_groups: ApplyOptions::GroupWise,
@@ -688,7 +687,7 @@ impl Expr {
 
         Expr::AnonymousFunction {
             input,
-            function: SpecialEq::new(Arc::new(function)),
+            function: new_column_udf(function),
             output_type,
             options: FunctionOptions {
                 collect_groups: ApplyOptions::GroupWise,
@@ -1065,7 +1064,11 @@ impl Expr {
     }
 
     pub fn fill_null_with_strategy(self, strategy: FillNullStrategy) -> Self {
-        self.apply_private(FunctionExpr::FillNullWithStrategy(strategy))
+        if strategy.is_elementwise() {
+            self.map_private(FunctionExpr::FillNullWithStrategy(strategy))
+        } else {
+            self.apply_private(FunctionExpr::FillNullWithStrategy(strategy))
+        }
     }
 
     /// Replace the floating point `NaN` values by a value.
@@ -1359,10 +1362,10 @@ impl Expr {
         quantile: f64,
         mut options: RollingOptionsDynamicWindow,
     ) -> Expr {
-        options.fn_params = Some(Arc::new(RollingQuantileParams {
+        options.fn_params = Some(RollingFnParams::Quantile(RollingQuantileParams {
             prob: quantile,
             interpol,
-        }) as Arc<dyn Any + Send + Sync>);
+        }));
 
         self.finish_rolling_by(by, options, RollingFunctionBy::QuantileBy)
     }
@@ -1435,10 +1438,10 @@ impl Expr {
         quantile: f64,
         mut options: RollingOptionsFixedWindow,
     ) -> Expr {
-        options.fn_params = Some(Arc::new(RollingQuantileParams {
+        options.fn_params = Some(RollingFnParams::Quantile(RollingQuantileParams {
             prob: quantile,
             interpol,
-        }) as Arc<dyn Any + Send + Sync>);
+        }));
 
         self.finish_rolling(options, RollingFunction::Quantile)
     }
@@ -1741,9 +1744,13 @@ impl Expr {
             })
     }
 
-    pub fn reshape(self, dimensions: &[i64], nested_type: NestedType) -> Self {
-        let dimensions = dimensions.to_vec();
-        self.apply_private(FunctionExpr::Reshape(dimensions, nested_type))
+    #[cfg(feature = "dtype-array")]
+    pub fn reshape(self, dimensions: &[i64]) -> Self {
+        let dimensions = dimensions
+            .iter()
+            .map(|&v| ReshapeDimension::new(v))
+            .collect();
+        self.apply_private(FunctionExpr::Reshape(dimensions))
     }
 
     #[cfg(feature = "ewma")]
@@ -1976,7 +1983,7 @@ where
 
     Expr::AnonymousFunction {
         input,
-        function: SpecialEq::new(Arc::new(function)),
+        function: new_column_udf(function),
         output_type,
         options: FunctionOptions {
             collect_groups: ApplyOptions::ElementWise,
@@ -2002,7 +2009,7 @@ where
 
     Expr::AnonymousFunction {
         input,
-        function: SpecialEq::new(Arc::new(function)),
+        function: new_column_udf(function),
         output_type,
         options: FunctionOptions {
             collect_groups: ApplyOptions::ApplyList,
@@ -2040,7 +2047,7 @@ where
 
     Expr::AnonymousFunction {
         input,
-        function: SpecialEq::new(Arc::new(function)),
+        function: new_column_udf(function),
         output_type,
         options: FunctionOptions {
             collect_groups: ApplyOptions::GroupWise,

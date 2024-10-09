@@ -4,7 +4,7 @@ use polars_core::prelude::{InitHashMaps, PlHashMap, PlIndexMap};
 use polars_core::schema::Schema;
 use polars_error::PolarsResult;
 use polars_plan::plans::expr_ir::{ExprIR, OutputName};
-use polars_plan::plans::{AExpr, IR};
+use polars_plan::plans::{AExpr, FunctionIR, IR};
 use polars_plan::prelude::SinkType;
 use polars_utils::arena::{Arena, Node};
 use polars_utils::itertools::Itertools;
@@ -238,6 +238,12 @@ pub fn lower_ir(
         },
 
         IR::MapFunction { input, function } => {
+            // MergeSorted uses a rechunk hack incompatible with the
+            // streaming engine.
+            if let FunctionIR::MergeSorted { .. } = function {
+                todo!()
+            }
+
             let function = function.clone();
             let phys_input = lower_ir(
                 *input,
@@ -248,18 +254,32 @@ pub fn lower_ir(
                 expr_cache,
             )?;
 
-            if function.is_streamable() {
-                let map = Arc::new(move |df| function.evaluate(df));
-                PhysNodeKind::Map {
+            match function {
+                FunctionIR::RowIndex {
+                    name,
+                    offset,
+                    schema: _,
+                } => PhysNodeKind::WithRowIndex {
                     input: phys_input,
-                    map,
-                }
-            } else {
-                let map = Arc::new(move |df| function.evaluate(df));
-                PhysNodeKind::InMemoryMap {
-                    input: phys_input,
-                    map,
-                }
+                    name,
+                    offset,
+                },
+
+                function if function.is_streamable() => {
+                    let map = Arc::new(move |df| function.evaluate(df));
+                    PhysNodeKind::Map {
+                        input: phys_input,
+                        map,
+                    }
+                },
+
+                function => {
+                    let map = Arc::new(move |df| function.evaluate(df));
+                    PhysNodeKind::InMemoryMap {
+                        input: phys_input,
+                        map,
+                    }
+                },
             }
         },
 

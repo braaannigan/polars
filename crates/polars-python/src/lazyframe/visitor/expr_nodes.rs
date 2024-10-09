@@ -1,4 +1,6 @@
 use polars::datatypes::TimeUnit;
+#[cfg(feature = "iejoin")]
+use polars::prelude::InequalityOperator;
 use polars::series::ops::NullBehavior;
 use polars_core::prelude::{NonExistent, QuantileInterpolOptions};
 use polars_core::series::IsSorted;
@@ -109,6 +111,19 @@ impl IntoPy<PyObject> for Wrap<Operator> {
             Operator::Xor => PyOperator::Xor,
             Operator::LogicalAnd => PyOperator::LogicalAnd,
             Operator::LogicalOr => PyOperator::LogicalOr,
+        }
+        .into_py(py)
+    }
+}
+
+#[cfg(feature = "iejoin")]
+impl IntoPy<PyObject> for Wrap<InequalityOperator> {
+    fn into_py(self, py: Python<'_>) -> PyObject {
+        match self.0 {
+            InequalityOperator::Lt => PyOperator::Lt,
+            InequalityOperator::LtEq => PyOperator::LtEq,
+            InequalityOperator::Gt => PyOperator::Gt,
+            InequalityOperator::GtEq => PyOperator::GtEq,
         }
         .into_py(py)
     }
@@ -723,6 +738,16 @@ pub(crate) fn into_py(py: Python<'_>, expr: &AExpr) -> PyResult<PyObject> {
                 arguments: vec![n.0],
                 options: py.None(),
             },
+            IRAggExpr::Bitwise(n, f) => Agg {
+                name: "bitwise".to_object(py),
+                arguments: vec![n.0],
+                options: match f {
+                    polars::prelude::BitwiseAggFunction::And => "and",
+                    polars::prelude::BitwiseAggFunction::Or => "or",
+                    polars::prelude::BitwiseAggFunction::Xor => "xor",
+                }
+                .to_object(py),
+            },
         }
         .into_py(py),
         AExpr::Ternary {
@@ -757,6 +782,9 @@ pub(crate) fn into_py(py: Python<'_>, expr: &AExpr) -> PyResult<PyObject> {
                 },
                 FunctionExpr::ListExpr(_) => {
                     return Err(PyNotImplementedError::new_err("list expr"))
+                },
+                FunctionExpr::Bitwise(_) => {
+                    return Err(PyNotImplementedError::new_err("bitwise expr"))
                 },
                 FunctionExpr::StringExpr(strfun) => match strfun {
                     StringFunction::ConcatHorizontal {
@@ -1169,12 +1197,12 @@ pub(crate) fn into_py(py: Python<'_>, expr: &AExpr) -> PyResult<PyObject> {
                 FunctionExpr::Mode => ("mode",).to_object(py),
                 FunctionExpr::Skew(bias) => ("skew", bias).to_object(py),
                 FunctionExpr::Kurtosis(fisher, bias) => ("kurtosis", fisher, bias).to_object(py),
-                FunctionExpr::Reshape(_, _) => {
-                    return Err(PyNotImplementedError::new_err("reshape"))
-                },
+                #[cfg(feature = "dtype-array")]
+                FunctionExpr::Reshape(_) => return Err(PyNotImplementedError::new_err("reshape")),
                 #[cfg(feature = "repeat_by")]
                 FunctionExpr::RepeatBy => ("repeat_by",).to_object(py),
                 FunctionExpr::ArgUnique => ("arg_unique",).to_object(py),
+                FunctionExpr::Repeat => ("repeat",).to_object(py),
                 FunctionExpr::Rank {
                     options: _,
                     seed: _,

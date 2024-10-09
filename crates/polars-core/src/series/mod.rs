@@ -1,5 +1,5 @@
 //! Type agnostic columnar data structure.
-pub use crate::prelude::ChunkCompare;
+pub use crate::prelude::ChunkCompareEq;
 use crate::prelude::*;
 use crate::{HEAD_DEFAULT_LENGTH, TAIL_DEFAULT_LENGTH};
 
@@ -90,10 +90,11 @@ use crate::POOL;
 ///     .all(|(a, b)| a == *b))
 /// ```
 ///
-/// See all the comparison operators in the [CmpOps trait](crate::chunked_array::ops::ChunkCompare)
+/// See all the comparison operators in the [ChunkCompareEq trait](crate::chunked_array::ops::ChunkCompareEq) and
+/// [ChunkCompareIneq trait](crate::chunked_array::ops::ChunkCompareIneq).
 ///
 /// ## Iterators
-/// The Series variants contain differently typed [ChunkedArray's](crate::chunked_array::ChunkedArray).
+/// The Series variants contain differently typed [ChunkedArray](crate::chunked_array::ChunkedArray)s.
 /// These structs can be turned into iterators, making it possible to use any function/ closure you want
 /// on a Series.
 ///
@@ -713,10 +714,6 @@ impl Series {
 
     #[cfg(feature = "dtype-time")]
     pub(crate) fn into_time(self) -> Series {
-        #[cfg(not(feature = "dtype-time"))]
-        {
-            panic!("activate feature dtype-time")
-        }
         match self.dtype() {
             DataType::Int64 => self.i64().unwrap().clone().into_time().into_series(),
             DataType::Time => self
@@ -827,6 +824,17 @@ impl Series {
         let idx = self.arg_unique()?;
         // SAFETY: Indices are in bounds.
         unsafe { Ok(self.take_unchecked(&idx)) }
+    }
+
+    pub fn try_idx(&self) -> Option<&IdxCa> {
+        #[cfg(feature = "bigidx")]
+        {
+            self.try_u64()
+        }
+        #[cfg(not(feature = "bigidx"))]
+        {
+            self.try_u32()
+        }
     }
 
     pub fn idx(&self) -> PolarsResult<&IdxCa> {

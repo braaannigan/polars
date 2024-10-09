@@ -75,10 +75,10 @@ pub fn resolve_join(
     }
 
     let input_left = input_left.map_right(Ok).right_or_else(|input| {
-        to_alp_impl(owned(input), ctxt).map_err(|e| e.context(failed_input!(join left)))
+        to_alp_impl(owned(input), ctxt).map_err(|e| e.context(failed_here!(join left)))
     })?;
     let input_right = input_right.map_right(Ok).right_or_else(|input| {
-        to_alp_impl(owned(input), ctxt).map_err(|e| e.context(failed_input!(join right)))
+        to_alp_impl(owned(input), ctxt).map_err(|e| e.context(failed_here!(join right)))
     })?;
 
     let schema_left = ctxt.lp_arena.get(input_left).schema(ctxt.lp_arena);
@@ -152,6 +152,17 @@ fn resolve_join_where(
     ctxt: &mut DslConversionContext,
 ) -> PolarsResult<Node> {
     check_join_keys(&predicates)?;
+    let input_left = to_alp_impl(Arc::unwrap_or_clone(input_left), ctxt)
+        .map_err(|e| e.context(failed_here!(join left)))?;
+    let input_right = to_alp_impl(Arc::unwrap_or_clone(input_right), ctxt)
+        .map_err(|e| e.context(failed_here!(join left)))?;
+
+    let schema_left = ctxt.lp_arena.get(input_left).schema(ctxt.lp_arena);
+    let schema_right = ctxt
+        .lp_arena
+        .get(input_right)
+        .schema(ctxt.lp_arena)
+        .into_owned();
     for e in &predicates {
         let no_binary_comparisons = e
             .into_iter()
@@ -161,18 +172,29 @@ fn resolve_join_where(
             })
             .count();
         polars_ensure!(no_binary_comparisons == 1, InvalidOperation: "only 1 binary comparison allowed as join condition");
-    }
-    let input_left = to_alp_impl(Arc::unwrap_or_clone(input_left), ctxt)
-        .map_err(|e| e.context(failed_input!(join left)))?;
-    let input_right = to_alp_impl(Arc::unwrap_or_clone(input_right), ctxt)
-        .map_err(|e| e.context(failed_input!(join left)))?;
 
-    let schema_left = ctxt.lp_arena.get(input_left).schema(ctxt.lp_arena);
-    let schema_right = ctxt
-        .lp_arena
-        .get(input_right)
-        .schema(ctxt.lp_arena)
-        .into_owned();
+        fn all_in_schema(
+            schema: &Schema,
+            other: Option<&Schema>,
+            left: &Expr,
+            right: &Expr,
+        ) -> bool {
+            let mut iter =
+                expr_to_leaf_column_names_iter(left).chain(expr_to_leaf_column_names_iter(right));
+            iter.all(|name| {
+                schema.contains(name.as_str()) && other.map_or(true, |s| !s.contains(name.as_str()))
+            })
+        }
+
+        let valid = e.into_iter().all(|e| match e {
+            Expr::BinaryExpr { left, op, right } if op.is_comparison() => {
+                !(all_in_schema(&schema_left, None, left, right)
+                    || all_in_schema(&schema_right, Some(&schema_left), left, right))
+            },
+            _ => true,
+        });
+        polars_ensure!( valid, InvalidOperation: "join predicate in 'join_where' only refers to columns of a single table")
+    }
 
     let owned = |e: Arc<Expr>| (*e).clone();
 
@@ -300,8 +322,25 @@ fn resolve_join_where(
         )?;
 
         if let Some(ie_op_) = to_inequality_operator(&op) {
-            // We already have an IEjoin or an Inner join, push to remaining
-            if ie_op.len() >= 2 || !eq_right_on.is_empty() {
+            fn is_numeric(e: &Expr, schema: &Schema) -> bool {
+                expr_to_leaf_column_names_iter(e).any(|name| {
+                    if let Some(dt) = schema.get(name.as_str()) {
+                        dt.to_physical().is_numeric()
+                    } else {
+                        false
+                    }
+                })
+            }
+
+            // We fallback to remaining if:
+            // - we already have an IEjoin or Inner join
+            // - we already have an Inner join
+            // - data is not numeric (our iejoin doesn't yet implement that)
+            if ie_op.len() >= 2
+                || !eq_right_on.is_empty()
+                || !is_numeric(&left, &schema_left)
+                || !is_numeric(&right, &schema_right)
+            {
                 remaining_preds.push(to_binary_post_join(left, op, right, &schema_right, &suffix))
             } else {
                 ie_left_on.push(left);

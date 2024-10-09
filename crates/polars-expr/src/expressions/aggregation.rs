@@ -175,6 +175,24 @@ impl PhysicalExpr for AggregationExpr {
                 .var_reduce(ddof)
                 .map(|sc| sc.into_series(s.name().clone())),
             GroupByMethod::Quantile(_, _) => unimplemented!(),
+            #[cfg(feature = "bitwise")]
+            GroupByMethod::Bitwise(f) => match f {
+                GroupByBitwiseMethod::And => parallel_op_series(
+                    |s| s.and_reduce().map(|sc| sc.into_series(s.name().clone())),
+                    s,
+                    allow_threading,
+                ),
+                GroupByBitwiseMethod::Or => parallel_op_series(
+                    |s| s.or_reduce().map(|sc| sc.into_series(s.name().clone())),
+                    s,
+                    allow_threading,
+                ),
+                GroupByBitwiseMethod::Xor => parallel_op_series(
+                    |s| s.xor_reduce().map(|sc| sc.into_series(s.name().clone())),
+                    s,
+                    allow_threading,
+                ),
+            },
         }
     }
     #[allow(clippy::ptr_arg)]
@@ -375,7 +393,12 @@ impl PhysicalExpr for AggregationExpr {
                     let s = match ac.agg_state() {
                         // mean agg:
                         // -> f64 -> list<f64>
-                        AggState::AggregatedScalar(s) => s.reshape_list(&[-1, 1]).unwrap(),
+                        AggState::AggregatedScalar(s) => s
+                            .reshape_list(&[
+                                ReshapeDimension::Infer,
+                                ReshapeDimension::new_dimension(1),
+                            ])
+                            .unwrap(),
                         _ => {
                             let agg = ac.aggregated();
                             agg.as_list().into_series()
@@ -401,6 +424,16 @@ impl PhysicalExpr for AggregationExpr {
                 GroupByMethod::Quantile(_, _) => {
                     // implemented explicitly in AggQuantile struct
                     unimplemented!()
+                },
+                #[cfg(feature = "bitwise")]
+                GroupByMethod::Bitwise(f) => {
+                    let (s, groups) = ac.get_final_aggregation();
+                    let agg_s = match f {
+                        GroupByBitwiseMethod::And => s.agg_and(&groups),
+                        GroupByBitwiseMethod::Or => s.agg_or(&groups),
+                        GroupByBitwiseMethod::Xor => s.agg_xor(&groups),
+                    };
+                    AggregatedScalar(rename_series(agg_s, keep_name))
                 },
                 GroupByMethod::NanMin => {
                     #[cfg(feature = "propagate_nans")]

@@ -6,12 +6,13 @@ use std::{mem, ops};
 use polars_utils::itertools::Itertools;
 use rayon::prelude::*;
 
+use crate::chunked_array::metadata::MetadataFlags;
 #[cfg(feature = "algorithm_group_by")]
 use crate::chunked_array::ops::unique::is_unique_helper;
 use crate::prelude::*;
 #[cfg(feature = "row_hash")]
 use crate::utils::split_df;
-use crate::utils::{slice_offsets, try_get_supertype, NoNull};
+use crate::utils::{slice_offsets, try_get_supertype, Container, NoNull};
 
 #[cfg(feature = "dataframe_arithmetic")]
 mod arithmetic;
@@ -36,7 +37,7 @@ use crate::chunked_array::cast::CastOptions;
 #[cfg(feature = "row_hash")]
 use crate::hashing::_df_rows_to_hashes_threaded_vertical;
 #[cfg(feature = "zip_with")]
-use crate::prelude::min_max_binary::min_max_binary_series;
+use crate::prelude::min_max_binary::min_max_binary_columns;
 use crate::prelude::sort::{argsort_multiple_row_fmt, prepare_arg_sort};
 use crate::series::IsSorted;
 use crate::POOL;
@@ -525,10 +526,15 @@ impl DataFrame {
     /// Aggregate all the chunks in the DataFrame to a single chunk in parallel.
     /// This may lead to more peak memory consumption.
     pub fn as_single_chunk_par(&mut self) -> &mut Self {
-        self.as_single_chunk();
-        // if self.columns.iter().any(|s| s.n_chunks() > 1) {
-        //     self.columns = self._apply_columns_par(&|s| s.rechunk());
-        // }
+        if self.columns.iter().any(|c| {
+            if let Column::Series(s) = c {
+                s.n_chunks() > 1
+            } else {
+                false
+            }
+        }) {
+            self.columns = self._apply_columns_par(&|s| s.rechunk());
+        }
         self
     }
 
@@ -551,13 +557,13 @@ impl DataFrame {
             None => false,
             Some(first_column_chunk_lengths) => {
                 // Fast Path for single Chunk Series
-                if first_column_chunk_lengths.len() == 1 {
-                    return chunk_lengths.any(|cl| cl.len() != 1);
+                if first_column_chunk_lengths.size_hint().0 == 1 {
+                    return chunk_lengths.any(|cl| cl.size_hint().0 != 1);
                 }
                 // Always rechunk if we have more chunks than rows.
                 // except when we have an empty df containing a single chunk
                 let height = self.height();
-                let n_chunks = first_column_chunk_lengths.len();
+                let n_chunks = first_column_chunk_lengths.size_hint().0;
                 if n_chunks > height && !(height == 0 && n_chunks == 1) {
                     return true;
                 }
@@ -574,9 +580,17 @@ impl DataFrame {
     }
 
     /// Ensure all the chunks in the [`DataFrame`] are aligned.
-    pub fn align_chunks(&mut self) -> &mut Self {
+    pub fn align_chunks_par(&mut self) -> &mut Self {
         if self.should_rechunk() {
             self.as_single_chunk_par()
+        } else {
+            self
+        }
+    }
+
+    pub fn align_chunks(&mut self) -> &mut Self {
+        if self.should_rechunk() {
+            self.as_single_chunk()
         } else {
             self
         }
@@ -902,7 +916,7 @@ impl DataFrame {
 
     /// Concatenate a [`DataFrame`] to this [`DataFrame`] and return as newly allocated [`DataFrame`].
     ///
-    /// If many `vstack` operations are done, it is recommended to call [`DataFrame::align_chunks`].
+    /// If many `vstack` operations are done, it is recommended to call [`DataFrame::align_chunks_par`].
     ///
     /// # Example
     ///
@@ -948,7 +962,7 @@ impl DataFrame {
 
     /// Concatenate a [`DataFrame`] to this [`DataFrame`]
     ///
-    /// If many `vstack` operations are done, it is recommended to call [`DataFrame::align_chunks`].
+    /// If many `vstack` operations are done, it is recommended to call [`DataFrame::align_chunks_par`].
     ///
     /// # Example
     ///
@@ -1011,7 +1025,7 @@ impl DataFrame {
 
     /// Concatenate a [`DataFrame`] to this [`DataFrame`]
     ///
-    /// If many `vstack` operations are done, it is recommended to call [`DataFrame::align_chunks`].
+    /// If many `vstack` operations are done, it is recommended to call [`DataFrame::align_chunks_par`].
     ///
     /// # Panics
     /// Panics if the schema's don't match.
@@ -1037,7 +1051,7 @@ impl DataFrame {
     ///
     /// Prefer `vstack` over `extend` when you want to append many times before doing a query. For instance
     /// when you read in multiple files and when to store them in a single `DataFrame`. In the latter case, finish the sequence
-    /// of `append` operations with a [`rechunk`](Self::align_chunks).
+    /// of `append` operations with a [`rechunk`](Self::align_chunks_par).
     pub fn extend(&mut self, other: &DataFrame) -> PolarsResult<()> {
         polars_ensure!(
             self.width() == other.width(),
@@ -1255,14 +1269,13 @@ impl DataFrame {
     /// on length or duplicates.
     ///
     /// # Safety
-    /// The caller must ensure `column.len() == self.height()` .
-    pub unsafe fn with_column_unchecked(&mut self, column: Series) -> &mut Self {
-        if cfg!(debug_assertions) {
-            self.with_column(column).unwrap()
-        } else {
-            self.get_columns_mut().push(column.into_column());
-            self
-        }
+    /// The caller must ensure `self.width() == 0 || column.len() == self.height()` .
+    pub unsafe fn with_column_unchecked(&mut self, column: Column) -> &mut Self {
+        debug_assert!(self.width() == 0 || self.height() == column.len());
+        debug_assert!(self.get_column_index(column.name().as_str()).is_none());
+
+        unsafe { self.get_columns_mut() }.push(column);
+        self
     }
 
     fn add_column_by_schema(&mut self, c: Column, schema: &Schema) -> PolarsResult<()> {
@@ -1870,7 +1883,7 @@ impl DataFrame {
         let df = df.as_single_chunk_par();
         let mut take = match (by_column.len(), has_struct) {
             (1, false) => {
-                let s = &by_column[0].as_materialized_series();
+                let s = &by_column[0];
                 let options = SortOptions {
                     descending: sort_options.descending[0],
                     nulls_last: sort_options.nulls_last[0],
@@ -1918,6 +1931,77 @@ impl DataFrame {
         let mut df = unsafe { df.take_unchecked_impl(&take, sort_options.multithreaded) };
         set_sorted(&mut df);
         Ok(df)
+    }
+
+    /// Create a `DataFrame` that has fields for all the known runtime metadata for each column.
+    ///
+    /// This dataframe does not necessarily have a specified schema and may be changed at any
+    /// point. It is primarily used for debugging.
+    pub fn _to_metadata(&self) -> DataFrame {
+        let num_columns = self.columns.len();
+
+        let mut column_names =
+            StringChunkedBuilder::new(PlSmallStr::from_static("column_name"), num_columns);
+        let mut repr_ca = StringChunkedBuilder::new(PlSmallStr::from_static("repr"), num_columns);
+        let mut sorted_asc_ca =
+            BooleanChunkedBuilder::new(PlSmallStr::from_static("sorted_asc"), num_columns);
+        let mut sorted_dsc_ca =
+            BooleanChunkedBuilder::new(PlSmallStr::from_static("sorted_dsc"), num_columns);
+        let mut fast_explode_list_ca =
+            BooleanChunkedBuilder::new(PlSmallStr::from_static("fast_explode_list"), num_columns);
+        let mut min_value_ca =
+            StringChunkedBuilder::new(PlSmallStr::from_static("min_value"), num_columns);
+        let mut max_value_ca =
+            StringChunkedBuilder::new(PlSmallStr::from_static("max_value"), num_columns);
+        let mut distinct_count_ca: Vec<Option<IdxSize>> = Vec::with_capacity(num_columns);
+
+        for col in &self.columns {
+            let metadata = col.get_metadata();
+
+            let (flags, min_value, max_value, distinct_count) =
+                metadata.map_or((MetadataFlags::default(), None, None, None), |md| {
+                    (
+                        md.get_flags(),
+                        md.min_value(),
+                        md.max_value(),
+                        md.distinct_count(),
+                    )
+                });
+
+            let repr = match col {
+                Column::Series(_) => "series",
+                Column::Scalar(_) => "scalar",
+            };
+            let sorted_asc = flags.contains(MetadataFlags::SORTED_ASC);
+            let sorted_dsc = flags.contains(MetadataFlags::SORTED_DSC);
+            let fast_explode_list = flags.contains(MetadataFlags::FAST_EXPLODE_LIST);
+
+            column_names.append_value(col.name().clone());
+            repr_ca.append_value(repr);
+            sorted_asc_ca.append_value(sorted_asc);
+            sorted_dsc_ca.append_value(sorted_dsc);
+            fast_explode_list_ca.append_value(fast_explode_list);
+            min_value_ca.append_option(min_value.map(|v| v.as_any_value().to_string()));
+            max_value_ca.append_option(max_value.map(|v| v.as_any_value().to_string()));
+            distinct_count_ca.push(distinct_count);
+        }
+
+        unsafe {
+            DataFrame::new_no_checks(vec![
+                column_names.finish().into_column(),
+                repr_ca.finish().into_column(),
+                sorted_asc_ca.finish().into_column(),
+                sorted_dsc_ca.finish().into_column(),
+                fast_explode_list_ca.finish().into_column(),
+                min_value_ca.finish().into_column(),
+                max_value_ca.finish().into_column(),
+                IdxCa::from_slice_options(
+                    PlSmallStr::from_static("distinct_count"),
+                    &distinct_count_ca[..],
+                )
+                .into_column(),
+            ])
+        }
     }
 
     /// Return a sorted clone of this [`DataFrame`].
@@ -2095,7 +2179,7 @@ impl DataFrame {
     /// let mut df = DataFrame::new(vec![s0, s1])?;
     ///
     /// // Add 32 to get lowercase ascii values
-    /// df.apply_at_idx(1, |s| (s + 32).unwrap());
+    /// df.apply_at_idx(1, |s| s + 32);
     /// # Ok::<(), PolarsError>(())
     /// ```
     /// Results in:
@@ -2441,17 +2525,17 @@ impl DataFrame {
     /// but we also don't want to rechunk here, as this operation is costly and would benefit the caller
     /// as well.
     pub fn iter_chunks(&self, compat_level: CompatLevel, parallel: bool) -> RecordBatchIter {
+        debug_assert!(!self.should_rechunk(), "expected equal chunks");
         // If any of the columns is binview and we don't convert `compat_level` we allow parallelism
         // as we must allocate arrow strings/binaries.
-        let parallel = if parallel && compat_level.0 >= 1 {
-            self.columns.len() > 1
-                && self
-                    .columns
-                    .iter()
-                    .any(|s| matches!(s.dtype(), DataType::String | DataType::Binary))
-        } else {
-            false
-        };
+        let must_convert = compat_level.0 == 0;
+        let parallel = parallel
+            && must_convert
+            && self.columns.len() > 1
+            && self
+                .columns
+                .iter()
+                .any(|s| matches!(s.dtype(), DataType::String | DataType::Binary));
 
         RecordBatchIter {
             columns: &self.columns,
@@ -2513,24 +2597,19 @@ impl DataFrame {
 
     /// Aggregate the column horizontally to their min values.
     #[cfg(feature = "zip_with")]
-    pub fn min_horizontal(&self) -> PolarsResult<Option<Series>> {
-        let min_fn = |acc: &Series, s: &Series| min_max_binary_series(acc, s, true);
+    pub fn min_horizontal(&self) -> PolarsResult<Option<Column>> {
+        let min_fn = |acc: &Column, s: &Column| min_max_binary_columns(acc, s, true);
 
         match self.columns.len() {
             0 => Ok(None),
-            1 => Ok(Some(
-                self.columns[0].clone().as_materialized_series().clone(),
-            )),
-            2 => min_fn(
-                self.columns[0].as_materialized_series(),
-                self.columns[1].as_materialized_series(),
-            )
-            .map(Some),
+            1 => Ok(Some(self.columns[0].clone())),
+            2 => min_fn(&self.columns[0], &self.columns[1]).map(Some),
             _ => {
                 // the try_reduce_with is a bit slower in parallelism,
                 // but I don't think it matters here as we parallelize over columns, not over elements
                 POOL.install(|| {
-                    self.par_materialized_column_iter()
+                    self.columns
+                        .par_iter()
                         .map(|s| Ok(Cow::Borrowed(s)))
                         .try_reduce_with(|l, r| min_fn(&l, &r).map(Cow::Owned))
                         // we can unwrap the option, because we are certain there is a column
@@ -2544,22 +2623,19 @@ impl DataFrame {
 
     /// Aggregate the column horizontally to their max values.
     #[cfg(feature = "zip_with")]
-    pub fn max_horizontal(&self) -> PolarsResult<Option<Series>> {
-        let max_fn = |acc: &Series, s: &Series| min_max_binary_series(acc, s, false);
+    pub fn max_horizontal(&self) -> PolarsResult<Option<Column>> {
+        let max_fn = |acc: &Column, s: &Column| min_max_binary_columns(acc, s, false);
 
         match self.columns.len() {
             0 => Ok(None),
-            1 => Ok(Some(self.columns[0].as_materialized_series().clone())),
-            2 => max_fn(
-                self.columns[0].as_materialized_series(),
-                self.columns[1].as_materialized_series(),
-            )
-            .map(Some),
+            1 => Ok(Some(self.columns[0].clone())),
+            2 => max_fn(&self.columns[0], &self.columns[1]).map(Some),
             _ => {
                 // the try_reduce_with is a bit slower in parallelism,
                 // but I don't think it matters here as we parallelize over columns, not over elements
                 POOL.install(|| {
-                    self.par_materialized_column_iter()
+                    self.columns
+                        .par_iter()
                         .map(|s| Ok(Cow::Borrowed(s)))
                         .try_reduce_with(|l, r| max_fn(&l, &r).map(Cow::Owned))
                         // we can unwrap the option, because we are certain there is a column

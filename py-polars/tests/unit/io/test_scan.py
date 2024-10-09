@@ -149,7 +149,7 @@ def data_file_glob(session_tmp_dir: Path, data_file_extension: str) -> _DataFile
     assert sum(row_counts) == 10000
 
     # Make sure we pad file names with enough zeros to ensure correct
-    # lexographical ordering.
+    # lexicographical ordering.
     assert len(row_counts) < 100
 
     # Make sure that some of our data frames consist of multiple chunks which
@@ -785,3 +785,19 @@ def test_scan_stringio(method: str) -> None:
 def test_empty_list(method: Callable[[list[str]], pl.LazyFrame]) -> None:
     with pytest.raises(pl.exceptions.ComputeError, match="expected at least 1 source"):
         _ = (method)([]).collect()
+
+
+def test_scan_double_collect_row_index_invalidates_cached_ir_18892() -> None:
+    lf = pl.scan_csv(io.BytesIO(b"a\n1\n2\n3"))
+
+    lf.collect()
+
+    out = lf.with_row_index().collect()
+
+    assert_frame_equal(
+        out,
+        pl.DataFrame(
+            {"index": [0, 1, 2], "a": [1, 2, 3]},
+            schema={"index": pl.UInt32, "a": pl.Int64},
+        ),
+    )
